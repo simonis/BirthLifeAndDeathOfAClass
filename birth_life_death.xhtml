@@ -1,0 +1,784 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xml:lang="en" xmlns="http://www.w3.org/1999/xhtml">
+
+  <head>
+    <meta charset="utf-8" />
+
+    <title>Birth, Life and Death of a Class</title>
+
+    <meta name="description" content="Describe how to detect and analyze different classes of HotSpot crashes." />
+    <meta name="author" content="Volker H. Simonis" />
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui" />
+
+    <link rel="stylesheet" href="reveal.js/css/reveal.css" />
+    <link rel="stylesheet" href="reveal.js/css/theme/joker2017.css" id="theme" />
+
+    <!-- Code syntax highlighting -->
+    <link rel="stylesheet" href="reveal.js/lib/css/monokai_sublime.css" />
+
+  <style type="text/css">
+.scrollable {
+    bottom: 0px;
+    overflow-y: auto  !important;
+    overflow-x: hidden !important;
+}
+
+.reveal .slides > section.demo,
+.reveal .slides > section > section.demo {
+    padding: 0;
+}
+
+.reveal .big {
+    font-size: .8em;
+    line-height: 1.3em;
+}
+
+.reveal pre.console {
+    background-color: black;
+    color: #00ff00;
+}
+
+code.terminal .hljs-title {
+    color: #00ff00;
+}
+
+.reveal pre.noshadow {
+    border-radius: 0;
+    box-shadow: unset;
+}
+
+.reveal pre code {
+    max-height: 100%;
+}
+.bold {
+    font-weight: bold;
+}
+
+.reveal .outline_white {
+    color: white;
+    text-shadow:
+        -2px -2px 0 #000,
+         2px -2px 0 #000,
+        -2px  2px 0 #000,
+         2px  2px 0 #000;
+    min-height: 1.1em;
+    text-align: center;
+}
+.reveal .outline_black {
+    color: black;
+    text-shadow:
+        -2px -2px 0 #fff,
+         2px -2px 0 #fff,
+        -2px  2px 0 #fff,
+         2px  2px 0 #fff;
+    min-height: 1.1em;
+    text-align: center;
+}
+
+.reveal .slide-number {
+    position: fixed;
+    display: block;
+    left: 15px;
+    bottom: 15px;
+    opacity: 0.9;
+    z-index: 31;
+    font-size: 14px;
+}
+.reveal h1, .reveal h2, .reveal h3, .reveal h4, .reveal h5, .reveal h6 {
+    text-transform: none;
+}
+
+.hljs-class .hljs-title {
+    /* fix "public static class Y extends X {" such that 'Y' will be formatted the same like 'X' */
+    color: #A6E22E;
+    font-style: italic;
+}
+
+mark {
+    color: black;
+    background-color: yellow;
+    border-radius: 10px;
+}
+mark.orange {
+    color: black;
+    background-color: orange;
+    border-radius: 10px;
+}
+mark.border {
+    color: inherit;
+    background-color: inherit;
+    border: 5px solid #1B91FF;
+    /* Use a negative margin with the same size as the border to avoid size changes of elemnts with borders or when the border is set dynamically by fragments */
+    margin: 0 -5px 0 -5px;
+    border-radius: 10px;
+}
+mark.border-no-top {
+    color: inherit;
+    background-color: inherit;
+    margin: 0 -5px 0 -5px;
+    border-style: solid;
+    border-color: #1B91FF;
+    border-width: 0px 5px 5px 5px;
+    border-radius: 0px 0px 10px 10px;
+}
+mark.border-no-bottom {
+    color: inherit;
+    background-color: inherit;
+    margin: 0 -5px 0 -5px;
+    border-style: solid;
+    border-color: #1B91FF;
+    border-width: 5px 5px 0px 5px;
+    border-radius: 10px 10px 0px 0px;
+}
+
+.reveal .slides section .fragment.highlight-border, .reveal .slides section .fragment.highlight-current-border {
+  opacity: 1;
+  visibility: visible;
+  /* Define a transparent border with the same size for inactive fragments such that we have no size changes when the fragments get displayed */
+  border-width: 5px 5px 5px 5px;
+  border-style: solid;
+  border-color: transparent;
+  /* Use a negative margin with the same size as the border to avoid size changes of elemnts with borders or when the border is set dynamically by fragments */
+  margin: -5px;
+}
+.reveal .slides section .fragment.highlight-border.visible {
+  border: 5px solid #1B91FF;
+  border-radius: 10px;
+  margin: 5px -5px 5px -5px;
+}
+.reveal .slides section .fragment.highlight-current-border.current-fragment {
+  border: 5px solid #1B91FF;
+  border-radius: 10px;
+  margin: -5px;
+}
+.reveal .slides section .fragment.highlight-current-border.border-no-top.current-fragment {
+  border-style: solid;
+  border-color: transparent #1B91FF #1B91FF #1B91FF;
+  border-width: 5px;
+  border-radius: 0px 0px 10px 10px;
+  margin: -5px;
+}
+.reveal .slides section .fragment.highlight-current-border.border-no-bottom.current-fragment {
+  border-style: solid;
+  border-color: #1B91FF #1B91FF transparent #1B91FF;
+  border-width: 5px;
+  border-radius: 10px 10px 0px 0px;
+  margin: -5px;
+}
+.reveal .slides section .fragment.highlight-current-border.border-no-bottom-top.current-fragment {
+  border-style: solid;
+  border-color: transparent #1B91FF transparent #1B91FF;
+  border-width: 5px;
+  border-radius: 0px 0px 0px 0px;
+  margin: -5px;
+}
+
+
+  table.calling_hirarchy {
+/*    font-family: monospace, arial, helvetica, sans-serif; */
+/*    background-color: #ffffff; */
+    font-size: smaller;
+    border-collapse: collapse;
+    margin: 0px auto;
+    padding: 2px;
+    width: auto;
+    overflow: auto;
+    border: none;
+  }
+
+  table.calling_hirarchy tr {
+    border: none;
+  }
+
+  table.calling_hirarchy td {
+    padding: 4px;
+/*    font-family: monospace; */
+  }
+
+  td.indent_level_0 {
+    border-style: solid;
+    border-width: 2px;
+    background-color: #a0a0a0;
+  }
+  td.indent_level_1 {
+    border-style: solid;
+    border-width: 2px;
+    background-color: #a8a8a8;
+  }
+  td.indent_level_2 {
+    border-style: solid;
+    border-width: 2px;
+    background-color: #b0b0b0;
+  }
+  td.indent_level_3 {
+    border-style: solid;
+    border-width: 2px;
+    background-color: #b8b8b8;
+  }
+  td.indent_level_4 {
+    border-style: solid;
+    border-width: 2px;
+    background-color: #c0c0c0;
+  }
+  td.indent_level_5 {
+    border-style: solid;
+    border-width: 2px;
+    background-color: #c8c8c8;
+  }
+  td.indent_level_6 {
+    border-style: solid;
+    border-width: 2px;
+    background-color: #d0d0d0;
+  }
+  td.indent_level_7 {
+    border-style: solid;
+    border-width: 2px;
+    background-color: #d8d8d8;
+  }
+  td.indent_level_8 {
+    border-style: solid;
+    border-width: 2px;
+    background-color: #e0e0e0;
+  }
+  td.indent_level_9 {
+    border-style: solid;
+    border-width: 2px;
+    background-color: #e8e8e8;
+  }
+  td.indent_level_10 {
+    border-style: solid;
+    border-width: 2px;
+    background-color: #f0f0f0;
+  }
+  td.indent_level_11 {
+    border-style: solid;
+    border-width: 2px;
+    background-color: #f8f8f8;
+  }
+  td.indent_level_12 {
+    border-style: solid;
+    border-width: 2px;
+    background-color: #ffffff;
+  }
+  td.functionCall {
+/*    font-weight: bold; */
+    color: darkblue;
+  }
+  td.javaCall {
+    font-weight: bold;
+    color: darkgreen;
+  }
+  td.comment {
+    font-style: italic;
+    color: maroon;
+  }
+  td.highlight {
+    border-style: solid;
+    border-width: 2px;
+    background-color: #a0ffa0;
+  }
+  table.calling_hirarchy td[rowspan] {
+    border-style: none;
+    border-width: 0;
+    border-left: dotted;
+    border-left-width: 2px;
+  }
+  </style>
+
+    <!-- Printing and PDF exports -->
+    <script>
+      var link = document.createElement( 'link' );
+      link.rel = 'stylesheet';
+      link.type = 'text/css';
+      link.href = window.location.search.match( /print-pdf/gi ) ? 'reveal.js/css/print/pdf.css' : 'reveal.js/css/print/paper.css';
+      document.getElementsByTagName( 'head' )[0].appendChild( link );
+    </script>
+
+    <!--[if lt IE 9]>
+    <script src="reveal.js/lib/js/html5shiv.js"></script>
+    <![endif]-->
+
+    <!--
+      Issue #1105: Keyboard shortcut to skip forward/back over fragments #1173
+      https://github.com/hakimel/reveal.js/pull/1173
+    -->
+  </head>
+
+<!--
+;; indent block of text
+;; C-u <number> C-x <TAB>
+
+
+
+;; select this code and do 'M-x eval-region'
+(defun make-fragment (p1 p2)
+  "Wraps the selection into 'fragment' <span>s."
+  (interactive "r")
+  (setq inputStr (buffer-substring-no-properties p1 p2))
+  (setq inputStr (replace-regexp-in-string "&" "&amp;" inputStr))
+  (setq inputStr (replace-regexp-in-string "<" "&lt;" inputStr))
+  (setq inputStr (replace-regexp-in-string ">" "&gt;" inputStr))
+  (setq resultStr (concat "<span class=\"fragment\">" (concat inputStr "</span>")))
+  (delete-region p1 p2)
+  (insert resultStr)
+)
+
+(global-set-key (kbd "C-f") 'make-fragment)
+;; revert key-binding
+;; (global-set-key (kbd "C-f") 'forward-char)
+
+;; (vhs) The following is required to make 'C-c C-t' insert <code> tags without
+;; newlines. 'sgml-tag-alist' is the "file-local" version of 'html-tag-alist'
+(add-to-list 'html-tag-alist '("code"))
+(add-to-list 'sgml-tag-alist '("code"))
+
+-->
+
+  <body>
+
+    <div class="reveal">
+
+      <!-- Any section element inside of this container is displayed as a slide -->
+      <div class="slides">
+
+        <section>
+          <h1>Birth, Life and Death of a Class<br/></h1>
+          <p>
+            <small>Volker Simonis [Фолкер Симонис], SAP / <a href="mailto:volker.simonis@gmail.com">volker.simonis@gmail.com</a></small>
+          </p>
+        </section>
+
+<!--
+-->
+
+        <section>
+
+          <h3 style="text-transform: none;"><a href="https://github.com/simonis/BirthLifeAndDeathOfAClass">https://github.com/simonis/BirthLifeAndDeathOfAClass</a></h3>
+
+          <h3 style="text-transform: none;"><a href="https://rawgit.com/simonis/BirthLifeAndDeathOfAClass/master/birth_life_death.xhtml#/">https://rawgit.com/simonis/BirthLifeAndDeathOfAClass/master/birth_life_death.xhtml</a></h3>
+
+        </section>
+
+        <section class="demo">
+
+          <section>
+
+            <h2>The class File Format</h2>
+
+            <ul>
+              <li>Code to be executed by the Java Virtual Machine</li>
+              <li>Binary format (big-endian)</li>
+              <li>Hardware- and operating system-independent</li>
+              <li><a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html">Chapter 4</a>
+                of the <a href="https://docs.oracle.com/javase/specs/jvms/se8/html/index.html">Java Virtual Machine Specification</a></li>
+            </ul>
+          </section>
+
+
+          <section>
+
+            <h2>The class File Format</h2>
+
+            <pre class="big noshadow" style="margin: 0;" data-trim="true">
+              <code class="terminal" data-trim="true" data-noescape="true" style="">
+ClassFile {
+    u4             <span class="                 fragment highlight-current-border" data-fragment-index="1">magic;</span>                                 <span class="fragment" data-fragment-index="1">// 0xCAFEBABE</span>
+    u2             minor_version;
+    u2             <span class="                 fragment highlight-current-border" data-fragment-index="2">major_version;</span>                         <span class="fragment" data-fragment-index="2">// >= 45</span>
+    u2             <span class="border-no-bottom fragment highlight-current-border" data-fragment-index="3">constant_pool_count;                 </span>
+    cp_info        <span class="border-no-top    fragment highlight-current-border" data-fragment-index="3">constant_pool[constant_pool_count-1];</span>
+    u2             access_flags;
+    u2             <span class="border-no-bottom fragment highlight-current-border" data-fragment-index="4">this_class; </span>                           <span class="fragment" data-fragment-index="4">// pointers into</span>
+    u2             <span class="border-no-top    fragment highlight-current-border" data-fragment-index="4">super_class;</span>                           <span class="fragment" data-fragment-index="4">// the constant_pool</span>
+    u2             <span class="border-no-bottom fragment highlight-current-border" data-fragment-index="5">interfaces_count;            </span>
+    u2             <span class="border-no-top    fragment highlight-current-border" data-fragment-index="5">interfaces[interfaces_count];</span>
+    u2             <span class="border-no-bottom fragment highlight-current-border" data-fragment-index="6">fields_count;        </span>
+    field_info     <span class="border-no-top    fragment highlight-current-border" data-fragment-index="6">fields[fields_count];</span>
+    u2             <span class="border-no-bottom fragment highlight-current-border" data-fragment-index="7">methods_count;         </span>                <span class="fragment" data-fragment-index="7">// Here's the</span>
+    method_info    <span class="border-no-top    fragment highlight-current-border" data-fragment-index="7">methods[methods_count];</span>                <span class="fragment" data-fragment-index="7">// real bytecode!</span>
+    u2             <span class="border-no-bottom fragment highlight-current-border" data-fragment-index="8">attributes_count;            </span>          <span class="fragment" data-fragment-index="8">// predefined and</span>
+    attribute_info <span class="border-no-top    fragment highlight-current-border" data-fragment-index="8">attributes[attributes_count];</span>          <span class="fragment" data-fragment-index="8">// custom attributes</span>
+}
+              </code>
+            </pre>
+<!--
+
+OpenJDK 9 uses some custom, non-standardized attributes for module hashing
+to prevent that "fake modules" can use classes which have been qualifiedly exported to a specific module.
+
+-->
+
+          </section>
+
+          <section>
+            <h2><code style="text-transform: none;">HelloWorld.java</code></h2>
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+package simonis;
+
+public class HelloWorld {
+  public static void main(String[] args) {
+    System.out.println("Hello world!");
+  }
+}
+              </code>
+            </pre>
+            <br/>
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
+$ <span class="fragment">javac simonis/HelloWorld.java
+$ </span><span class="fragment">javap -c -v simonis.HelloWorld          
+...</span>
+              </code>
+            </pre>
+          </section>
+
+          <section>
+            <h2><code style="text-transform: none;">HelloWorld.class</code></h2>
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
+public class simonis.HelloWorld
+  minor version: 0
+  major version: 53
+  flags: (0x0021) ACC_PUBLIC, ACC_SUPER
+  <span class="fragment highlight-border" data-fragment-index="1">this_class</span>: <span class="fragment highlight-border" data-fragment-index="2" arrow-to="target1">#1</span>                          // simonis/HelloWorld
+  super_class: #3                         // java/lang/Object
+  interfaces: 0, fields: 0, methods: 2, attributes: 1
+Constant pool:
+   <span id="target1" class="fragment highlight-border" data-fragment-index="2">#1</span> = Class              <span class="fragment highlight-border" data-fragment-index="3" arrow-to="target2">#2</span>             // simonis/HelloWorld
+   <span id="target2" class="fragment highlight-border" data-fragment-index="3">#2</span> = Utf8               simonis/HelloWorld
+   #3 = Class              #4             // java/lang/Object
+   #4 = Utf8               java/lang/Object
+   ...
+              </code>
+            </pre>
+
+          </section>
+
+          <section class="demo">
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
+<span/>  <span class="fragment highlight-current-border" data-fragment-index="2" id="a1">#24</span> = Methodref          <span class="fragment highlight-current-border" data-fragment-index="3" arrow-to="a2">#25</span>.<span class="fragment highlight-current-border" data-fragment-index="3" arrow-to="a3">#27</span>  // java/io/PrintStream.println:(Ljava/lang/String;)V
+  <span class="fragment highlight-current-border" data-fragment-index="3" id="a2">#25</span> = Class              <span class="fragment highlight-current-border" data-fragment-index="4" arrow-to="a4">#26</span>      // java/io/PrintStream
+  <span class="fragment highlight-current-border" data-fragment-index="4" id="a4">#26</span> = Utf8               java/io/PrintStream
+  <span class="fragment highlight-current-border" data-fragment-index="3" id="a3">#27</span> = NameAndType        <span class="fragment highlight-current-border" data-fragment-index="4" arrow-to="a5">#28</span>:<span class="fragment highlight-current-border" data-fragment-index="4" arrow-to="a6">#29</span>  // println:(Ljava/lang/String;)V
+  <span class="fragment highlight-current-border" data-fragment-index="4" id="a5">#28</span> = Utf8               println
+  <span class="fragment highlight-current-border" data-fragment-index="4" id="a6">#29</span> = Utf8               (Ljava/lang/String;)V
+  ...
+  public static void main(java.lang.String[]);
+    Code:
+      stack=2, locals=1, args_size=1
+         0: <span class="border-no-bottom     fragment highlight-current-border" data-fragment-index="1">getstatic    </span> #16       // Field java/lang/System.out:Ljava/io/PrintStream;
+         3: <span class="border-no-bottom-top fragment highlight-current-border" data-fragment-index="1">ldc          </span> #22       // String Hello world!
+         5: <span class="border-no-top        fragment highlight-current-border" data-fragment-index="1">invokevirtual</span> <span class="fragment highlight-current-border" data-fragment-index="2" arrow-to="a1">#24</span>       <span class="fragment highlight-current-border" data-fragment-index="4">// Method java/io/PrintStream.println:(Ljava/lang/String;)V</span>
+         8: return
+      <span class="border-no-bottom     fragment highlight-current-border" data-fragment-index="5">LineNumberTable:</span>
+      <span class="border-no-bottom-top fragment highlight-current-border" data-fragment-index="5">  line 5: 0     </span>
+      <span class="border-no-top        fragment highlight-current-border" data-fragment-index="5">  line 6: 8     </span>
+      <span class="border-no-bottom     fragment highlight-current-border" data-fragment-index="6">LocalVariableTable:                              </span>
+      <span class="border-no-bottom-top fragment highlight-current-border" data-fragment-index="6">  Start  Length  Slot  Name   Signature          </span>
+      <span class="border-no-top        fragment highlight-current-border" data-fragment-index="6">      0       9     0  args   [Ljava/lang/String;</span>
+              </code>
+            </pre>
+
+          </section>
+        </section>
+
+
+
+        <section class="demo">
+
+          <section>
+
+            <h2>Class types</h2>
+
+            <ul>
+              <li>Regular, nested, anonymous, local, VM anonymous</li>
+            </ul>
+
+          </section>
+        </section>
+
+
+        <section class="demo">
+
+          <section>
+
+            <h2>Creating classes</h2>
+
+            <ul>
+              <li>Most common way is to use <code>javac</code></li>
+            </ul>
+
+          </section>
+        </section>
+
+
+<!--
+
+Note:
+- not all Java compilers generate the same Java class files and Java byte code.
+- e.g. String concatenation (simonis/Hello.java, JEP 280: Indify String Concatenation, OpenJDK/Eclipse compiler)
+- how Java is translated into bytecode is not specified by the standard
+
+Reference to BCL/ASM, ByteBuddy, etc.
+
+-->
+
+
+      </div>
+
+    </div>
+
+    <script src="reveal.js/lib/js/head.min.js"></script>
+    <script src="reveal.js/js/reveal.js"></script>
+
+    <script>
+
+      // Full list of configuration options available at:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        //width: 1024,
+        //height: 768,
+        //width: 1280,
+        //height: 720,
+        width: 1366,
+        height: 768,
+        //width: 1920,
+        //height: 1080,
+        margin: 0.1,
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        slideNumber: true,
+
+        transition: 'none', // none/fade/slide/convex/concave/zoom
+
+        // Optional reveal.js plugins
+        dependencies: [
+          { src: 'reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'reveal.js/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+          { src: 'reveal.js/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+          { src: 'reveal.js/plugin/highlight/highlight.js', async: true, condition: function() { return !!document.querySelector( 'pre code' ); }, callback: function() {
+
+hljs.registerLanguage('terminal', function(hljs) {
+  return {
+    contains: [
+      hljs.C_LINE_COMMENT_MODE,
+      {
+        className: 'title',
+        lexemes: /[$()>_a-zA-Z0-9]+/,
+        keywords: "$ (gdb) hsdb>",
+        begin: /^\$ |\(gdb\)|hsdb> /,
+        end: /[^\\]\n/,
+	contains: [
+          hljs.COMMENT('//', '$', { endsParent: true })
+	]
+      }
+    ]
+  }
+});
+
+hljs.initHighlightingOnLoad(); } },
+          { src: 'reveal.js/plugin/zoom-js/zoom.js', async: true },
+          { src: 'reveal.js/plugin/notes/notes.js', async: true }
+        ]
+      });
+
+      //Reveal.configure({ slideNumber: true });
+
+
+
+<![CDATA[
+
+      // This function was adapted from:
+      // Titus Cieslewski (https://stackoverflow.com/users/796329/titus-cieslewski) and
+      // Dan Harper (https://stackoverflow.com/users/148975/danharper) from:
+      // https://stackoverflow.com/questions/808826/draw-arrow-on-canvas-tag
+      function canvas_arrow(context, fromx, fromy, tox, toy){
+        var headlen = 10;   // length of head in pixels
+        var angle = Math.atan2(toy-fromy,tox-fromx);
+        context.lineCap = 'round';
+        context.moveTo(fromx, fromy);
+        context.lineTo(tox, toy);
+        context.moveTo(tox, toy);
+        context.lineTo(tox-headlen*Math.cos(angle-Math.PI/6),toy-headlen*Math.sin(angle-Math.PI/6));
+        context.moveTo(tox, toy);
+        context.lineTo(tox-headlen*Math.cos(angle+Math.PI/6),toy-headlen*Math.sin(angle+Math.PI/6));
+      }
+
+      function drawArrow(canvas, from, target, color) {
+        var ctx = canvas.getContext("2d");
+        ctx.lineWidth = 5;
+        ctx.strokeStyle= color;
+        var x1, y1, x2, y2;
+        if ((from.offsetTop + from.offsetHeight) < (target.offsetTop)) {
+          // 'from' above 'target'
+          if ((from.offsetLeft + from.offsetWidth) < (target.offsetLeft)) {
+            // 'from' feft of 'target'
+            x1 = from.offsetLeft + from.offsetWidth;
+            y1 = from.offsetTop + from.offsetHeight;
+            x2 = target.offsetLeft;
+            y2 = target.offsetTop;
+          }
+          else if ((from.offsetLeft) > (target.offsetLeft + target.offsetWidth)) {
+            // 'from' right of 'target'
+            x1 = from.offsetLeft;
+            y1 = from.offsetTop + from.offsetHeight;
+            x2 = target.offsetLeft + target.offsetWidth;
+            y2 = target.offsetTop;
+          }
+          else {
+            x1 = from.offsetLeft + (from.offsetWidth / 2);
+            y1 = from.offsetTop + from.offsetHeight;
+            x2 = target.offsetLeft + (target.offsetWidth / 2);
+            y2 = target.offsetTop;
+          }
+        }
+        else if ((from.offsetTop) > (target.offsetTop + target.offsetHeight)) {
+          // 'from' below 'target'
+          if ((from.offsetLeft + from.offsetWidth) < (target.offsetLeft)) {
+            // 'from' feft of 'target'
+            x1 = from.offsetLeft + from.offsetWidth;
+            y1 = from.offsetTop;
+            x2 = target.offsetLeft;
+            y2 = target.offsetTop + target.offsetHeight;
+          }
+          else if ((from.offsetLeft) > (target.offsetLeft + target.offsetWidth)) {
+            // 'from' right of 'target'
+            x1 = from.offsetLeft;
+            y1 = from.offsetTop;
+            x2 = target.offsetLeft + target.offsetWidth;
+            y2 = target.offsetTop + target.offsetHeight;
+          }
+          else {
+            x1 = from.offsetLeft + (from.offsetWidth / 2);
+            y1 = from.offsetTop;
+            x2 = target.offsetLeft + (target.offsetWidth / 2);
+            y2 = target.offsetTop + target.offsetHeight;
+          }
+        }
+        else if ((from.offsetLeft) < (target.offsetLeft)) {
+          // 'from' feft of 'target'
+          x1 = from.offsetLeft + from.offsetWidth;
+          y1 = from.offsetTop + (from.offsetHeight / 2);
+          x2 = target.offsetLeft;
+          y2 = target.offsetTop + (target.offsetHeight / 2);
+        }
+        else {
+          // 'from' right of 'target'
+          x1 = from.offsetLeft;
+          y1 = from.offsetTop + (from.offsetHeight / 2);
+          x2 = target.offsetLeft + target.offsetWidth;
+          y2 = target.offsetTop + (target.offsetHeight / 2);
+        }
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        //ctx.bezierCurveTo(30,60,40,100, 50,120);
+        ctx.lineTo(x2, y2);
+        canvas_arrow(ctx, x1, y1, x2, y2);
+        ctx.stroke();
+      }
+
+      function handleFragmentEvent(fragments, current, show) {
+        var code = current.parentNode;
+        var firstArrow = true;
+        var fragmentShown = false;
+
+        var canvas, canvases = code.getElementsByTagName("canvas");
+        if (canvases.length != 0) {
+          canvas = canvases[0];
+          canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+        }
+        fragments.forEach(function(fragment, i) {
+          if (show === false && current === fragment) fragmentShown = true;
+          var cll = fragment.classList;
+          if (((cll.contains("highlight-border") && !fragmentShown) ||
+               (cll.contains("highlight-current-border") && cll.contains("current-fragment"))) &&
+              fragment.hasAttribute("arrow-to")) {
+
+            var target = document.getElementById(fragment.getAttribute("arrow-to"));
+            if (canvases.length === 0) {
+              canvas = document.createElement("canvas");
+              // Place the canvas right over the parent node ..
+              canvas.style.position= 'absolute';
+              canvas.style.zIndex= '100';
+              canvas.style.top= '0px';
+              canvas.style.left= '0px';
+              // .. and make it the same size.
+              canvas.style.width= code.offsetWidth + 'px';
+              canvas.style.height= code.offsetHeight + 'px';
+              // Make the canvas bounding box (i.e. canvas' css dimensions)
+              // and the canvas logical size be the same. That way we don't
+              // have to convert between the two coordinate systems of the
+              // elemnts on the overlaying DOM element and the canvas.
+              canvas.width= code.offsetWidth;
+              canvas.height= code.offsetHeight;
+              code.appendChild(canvas);
+            }
+            drawArrow(canvas, fragment, target, "#1b91ff");
+          }
+          if (show === true && current === fragment) fragmentShown = true;
+        });
+      }
+
+      Reveal.addEventListener('fragmenthidden', function(event) {
+        handleFragmentEvent(event.allFragments, event.fragments[0], false);
+      });
+
+      Reveal.addEventListener('fragmentshown', function(event) {
+        handleFragmentEvent(event.allFragments, event.fragments[event.fragments.length - 1], true);
+      });
+
+
+]]>
+    </script>
+
+  </body>
+</html>
+
+<!--  LocalWords:  HotSpot scrollable px pre noshadow Volker Simonis builtin VM
+ -->
+<!--  LocalWords:  Observability Bytecode runtime bytecodes Ljava sayHello ns
+ -->
+<!--  LocalWords:  JBreak JVMTI JNI fPIC JDK traceMethodAgent cpp TTS Safepoint
+ -->
+<!--  LocalWords:  unboxing JIT JVM safepoints Intrinsify fff POSIX
+ -->
+<!--  LocalWords:  NullPointers StackOverflows SEH VEH AIX NPE GC td
+ -->
+<!--  LocalWords:  safepoint hljs hirarchy monospace arial helvetica
+ -->
+<!--  LocalWords:  ffffff functionCall darkblue javaCall darkgreen cp
+ -->
+<!--  LocalWords:  ffa rowspan setq inputStr substring resultStr kbd
+ -->
+<!--  LocalWords:  concat vhs Shoi Seffano Sreedhar Midkiff movl RBP
+ -->
+<!--  LocalWords:  CompileCommand compileonly RDX movq klass RAX addl
+ -->
+<!--  LocalWords:  showversion Xbatch PrintCompilation UseTLAB imull
+ -->
+<!--  LocalWords:  UseCompressedOops TieredCompilation scalarReplace
+ -->
+<!--  LocalWords:  PrintOptoAssembly DoEscapeAnalysis arraycopy alloc
+ -->
+<!--  LocalWords:  PrintEscapeAnalysis PrintEliminateAllocations Bak
+ -->
+<!--  LocalWords:  IndexOutOfBoundsException ArrayCopy ArrayCopyNode
+ -->
+<!--  LocalWords:  AllocateArrayNode Disassembler Binutils Pangin
+ -->
+<!--  LocalWords:  RigaDevDay JPoint Beckwith Parhar Rutisson Poonam
+ -->
+<!--  LocalWords:  Bajaj JEEConf
+ -->
