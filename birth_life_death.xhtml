@@ -327,10 +327,21 @@ mark.border-no-bottom {
   (delete-region p1 p2)
   (insert resultStr)
 )
+(defun make-fragment-simple (p1 p2)
+  "Wraps the selection into 'fragment' <span>s."
+  (interactive "r")
+  (setq inputStr (buffer-substring-no-properties p1 p2))
+  (setq resultStr (concat "<span class=\"fragment\">" (concat inputStr "</span>")))
+  (delete-region p1 p2)
+  (insert resultStr)
+)
 
 (global-set-key (kbd "C-f") 'make-fragment)
+(global-set-key (kbd "C-S-f") 'make-fragment-simple)
 ;; revert key-binding
 ;; (global-set-key (kbd "C-f") 'forward-char)
+;;
+;; use 'C-h k <keystroke>' to find out what <keystroke> ia currently bound to
 
 ;; (vhs) The following is required to make 'C-c C-t' insert <code> tags without
 ;; newlines. 'sgml-tag-alist' is the "file-local" version of 'html-tag-alist'
@@ -360,7 +371,7 @@ mark.border-no-bottom {
 
           <h3 style="text-transform: none;"><a href="https://github.com/simonis/BirthLifeAndDeathOfAClass">https://github.com/simonis/BirthLifeAndDeathOfAClass</a></h3>
 
-          <h3 style="text-transform: none;"><a href="https://rawgit.com/simonis/BirthLifeAndDeathOfAClass/master/birth_life_death.xhtml#/">https://rawgit.com/simonis/BirthLifeAndDeathOfAClass/master/birth_life_death.xhtml</a></h3>
+          <h3 style="text-transform: none;"><a href="https://simonis.github.io/BirthLifeAndDeathOfAClass">https://simonis.github.io/BirthLifeAndDeathOfAClass</a></h3>
 
         </section>
 
