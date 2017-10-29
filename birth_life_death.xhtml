@@ -312,12 +312,13 @@ mark.border-no-bottom {
 
 /* Quiz Content */
 .reveal .slides section .quiz-content {
+    display: inline-block;
     position: relative;
     background-color: #fefefe;
     margin: auto;
     padding: 0;
     border: 1px solid #888;
-    width: 80%;
+    width: auto;
     box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
     -webkit-animation-name: animatetop;
     -webkit-animation-duration: 0.4s;
@@ -522,28 +523,6 @@ $ </span><span class="fragment">javap -c -v simonis.HelloWorld
 ...</span>
               </code>
             </pre>
-
-
-<div class="quiz fragment">
-
-  <!-- Quiz content -->
-  <div class="quiz-content">
-    <div class="quiz-header">
-      <h2>Here comes the real tricky question ?</h2>
-    </div>
-    <div class="quiz-body">
-      <ol>
-        <li>The first answer.</li>
-        <li>Maybe the second answer is right.</li>
-        <li>Or do you take answer three.</li>
-      </ol>
-    </div>
-    <div class="quiz-footer">
-      &nbsp;
-    </div>
-  </div>
-
-</div>
 
           </section>
 
@@ -1221,9 +1200,119 @@ $ </span><span class="fragment">jhsdb hsdb  </span>
 
         <section class="demo">
 
-          <section>
+          <section class="demo">
 
             <h2>Class Identity</h2>
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+package simonis;
+public class TwoLoaders {
+
+ public static void main(String[] args) throws ... {
+
+  <span class="fragment highlight-current-border" data-fragment-index="1">TwoLoaders tl1 = new TwoLoaders();</span>
+
+  <span class="fragment highlight-current-border border-no-bottom" data-fragment-index="2">ClassLoader cl = new URLClassLoader(                                       </span>
+  <span class="fragment highlight-current-border border-no-top"    data-fragment-index="2">                   new URL[] { TwoLoaders.class.getResource("..") }, null);</span>
+
+  <span class="fragment highlight-current-border" data-fragment-index="3">Object tl2 = cl.loadClass("simonis.TwoLoaders").newInstance();</span>
+
+  System.out.println(<span class="fragment highlight-current-border" data-fragment-index="4">tl2.getClass().getName()</span>.equals(<span class="fragment highlight-current-border" data-fragment-index="4">tl1.getClass().getName()</span>)
+
+  System.out.println(<span class="fragment highlight-current-border" data-fragment-index="6">tl2 instanceof simonis.TwoLoaders</span>);
+
+  <span class="fragment highlight-current-border" data-fragment-index="8">tl1 = (TwoLoaders)tl2</span>;
+              </code>
+            </pre>
+
+
+<div class="quiz fragment" data-fragment-index="5">
+  <!-- Quiz content -->
+  <div class="quiz-content">
+    <div class="quiz-header">
+      <h2>Whats the output of <br/><code style='font-size: smaller;'>tl2.getClass().getName().equals(tl1.getClass().getName())</code><br/> ?</h2>
+    </div>
+    <div class="quiz-body">
+      <ol>
+        <li>true</li>
+        <li>false</li>
+      </ol>
+    </div>
+    <div class="quiz-footer">
+      &nbsp;
+    </div>
+  </div>
+</div>
+
+<div class="quiz fragment" data-fragment-index="7">
+  <!-- Quiz content -->
+  <div class="quiz-content">
+    <div class="quiz-header">
+      <h2>Whats the output of<br/> <code style='font-size: smaller;'>tl2 instanceof simonis.TwoLoaders</code><br/> ?</h2>
+    </div>
+    <div class="quiz-body">
+      <ol>
+        <li>true</li>
+        <li>false</li>
+      </ol>
+    </div>
+    <div class="quiz-footer">
+      &nbsp;
+    </div>
+  </div>
+</div>
+
+<div class="quiz fragment" data-fragment-index="9">
+  <!-- Quiz content -->
+  <div class="quiz-content">
+    <div class="quiz-header">
+      <h2>What about "<code style='font-size: smaller;'>tl1 = (TwoLoaders)tl2</code>" ?</h2>
+    </div>
+    <div class="quiz-body">
+      <ol>
+        <li>Compile error.</li>
+        <li>Runtime error.</li>
+        <li>Runs just fine.</li>
+      </ol>
+    </div>
+    <div class="quiz-footer">
+      &nbsp;
+    </div>
+  </div>
+</div>
+
+          </section>
+
+          <section class="demo">
+
+            <h2>Class Identity</h2>
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
+$ java simonis.TwoLoaders
+<span class="fragment" data-fragment-index="1">true
+false
+Exception in thread "main"
+  java.lang.ClassCastException:
+    <span class="fragment highlight-current-border" data-fragment-index="2">simonis.TwoLoaders cannot be cast to simonis.TwoLoaders</span>
+	at simonis.TwoLoaders.main(TwoLoaders.java:14)
+$ </span><span class="fragment" data-fragment-index="3">sapjvm/bin/java simonis.TwoLoaders
+...
+  java.lang.ClassCastException:
+    Cannot cast
+      class simonis.TwoLoaders
+       <span class="fragment highlight-current-border" data-fragment-index="4">(loader java.net.URLClassLoader [id=8020,parents=&lt;bootstrap&gt;])</span> to
+      class simonis.TwoLoaders
+       <span class="fragment highlight-current-border" data-fragment-index="4">(loader System [class=sun.misc.Launcher$AppClassLoader,urls=file:/tmp/])</span>
+	at simonis.TwoLoaders.main(TwoLoaders.java:14)</span>
+              </code>
+            </pre>
+          </section>
+
+          <section>
+
+            <h2>Initiating vs. Defining Class Loader</h2>
 
           </section>
         </section>
@@ -1264,6 +1353,16 @@ $ </span><span class="fragment">jhsdb hsdb  </span>
           </section>
         </section>
 
+
+
+        <section class="demo">
+
+          <section>
+
+            <h2>Class unloading</h2>
+
+          </section>
+        </section>
 
 <!--
 
