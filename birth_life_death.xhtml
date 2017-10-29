@@ -288,6 +288,80 @@ mark.border-no-bottom {
     border-left: dotted;
     border-left-width: 2px;
   }
+
+/* The Quiz (background) */
+.reveal .slides section .quiz {
+    display: none; /* Hidden by default */
+}
+
+.reveal .slides section .fragment.quiz {
+    display: none; /* Hidden by default */
+}
+
+.reveal .slides section .fragment.quiz.current-fragment {
+    display: block;
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    padding-top: 100px; /* Location of the box */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+}
+
+/* Quiz Content */
+.reveal .slides section .quiz-content {
+    position: relative;
+    background-color: #fefefe;
+    margin: auto;
+    padding: 0;
+    border: 1px solid #888;
+    width: 80%;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+    -webkit-animation-name: animatetop;
+    -webkit-animation-duration: 0.4s;
+    animation-name: animatetop;
+    animation-duration: 0.4s
+}
+
+/* Add Animation */
+@-webkit-keyframes animatetop {
+    from {top:-300px; opacity:0}
+    to {top:0; opacity:1}
+}
+
+@keyframes animatetop {
+    from {top:-300px; opacity:0}
+    to {top:0; opacity:1}
+}
+
+.reveal .slides section .quiz-header {
+    padding: 12px 12px;
+    background-color: #7571ff;
+/*  background-color: #5cb85c; */
+    color: white;
+}
+
+.reveal .slides section .quiz-header h2 {
+    margin: 0;
+}
+
+.reveal .slides section .quiz-body {
+    padding: 12px 16px;
+    color: #3f3f3f;
+}
+
+.reveal .slides section .quiz-body li:not(:last-child) {
+    margin-bottom: 15px;
+}
+
+.reveal .slides section .quiz-footer {
+    padding: 12px 16px;
+    background-color: #7571ff;
+/*  background-color: #5cb85c; */
+    color: white;
+}
   </style>
 
     <!-- Printing and PDF exports -->
@@ -448,6 +522,29 @@ $ </span><span class="fragment">javap -c -v simonis.HelloWorld
 ...</span>
               </code>
             </pre>
+
+
+<div class="quiz fragment">
+
+  <!-- Quiz content -->
+  <div class="quiz-content">
+    <div class="quiz-header">
+      <h2>Here comes the real tricky question ?</h2>
+    </div>
+    <div class="quiz-body">
+      <ol>
+        <li>The first answer.</li>
+        <li>Maybe the second answer is right.</li>
+        <li>Or do you take answer three.</li>
+      </ol>
+    </div>
+    <div class="quiz-footer">
+      &nbsp;
+    </div>
+  </div>
+
+</div>
+
           </section>
 
           <section>
@@ -799,7 +896,7 @@ class Nested$NestedClass {
             <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
               <code class="java" data-trim="true" data-noescape="true" style="height:100%">
 public class Inner {
-  /* not static */ class InnerClass {
+    /* not static */ class InnerClass {
     public InnerClass() {}
   }
   public static void main(String... args) {
@@ -951,7 +1048,6 @@ Enclosing method: <span class="fragment highlight-current-border" data-fragment-
 
         </section>
 
-
         <section class="demo">
 
           <section>
@@ -960,7 +1056,7 @@ Enclosing method: <span class="fragment highlight-current-border" data-fragment-
 
             <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
               <code class="java" data-trim="true" data-noescape="true" style="height:100%">
-ublic class VmAnonymous {
+public class VmAnonymous {
 
   public static void main(String... args) {
     Runnable r = () -> {
@@ -993,6 +1089,7 @@ Synthetic:        <span class="fragment highlight-current-border" data-fragment-
 Declaring class:  null
 Enclosing class:  null
 Enclosing method: null
+...
 </span>
               </code>
             </pre>
@@ -1000,13 +1097,10 @@ Enclosing method: null
 
           <section class="demo">
 
-            <h2>VM-Anonymous classes</h2>
-
             <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
               <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
-$<span class="fragment"> java simonis.VmAnonymous</span>
-<span class="fragment">...
-java.lang.Exception: Hello World!
+...
+<span class="fragment">java.lang.Exception: Hello World!
 	at simonis.VmAnonymous.lambda$0(VmAnonymous.java:9)
 	at simonis.VmAnonymous.main(VmAnonymous.java:12)
 $ </span><span class="fragment">java -XX:+UnlockDiagnosticVMOptions <span class="fragment highlight-current-border">-XX:+ShowHiddenFrames</span> simonis.VmAnonymous</span>
@@ -1017,10 +1111,109 @@ java.lang.Exception: Hello World!
 	at simonis.VmAnonymous.main(VmAnonymous.java:12)
 $ </span><span class="fragment">java <span class="fragment highlight-current-border">-Djdk.internal.lambda.dumpProxyClasses=/tmp</span> simonis.VmAnonymous</span>
 <span class="fragment">...
-$ </span><span class="fragment">ls -l /tmp/simonis/</span>
-<span class="fragment">-rw-rw-r-- 1 simonis simonis 336 Okt 13 19:43 VmAnonymous$$Lambda$1.class</span>
+$ </span><span class="fragment">ls -l /tmp/*.class</span>
+<span class="fragment">...
+-rw-rw-r-- 1 simonis simonis 336 Okt 13 19:43 VmAnonymous$$Lambda$1.class</span>
               </code>
             </pre>
+          </section>
+
+          <section>
+
+            <h2>Stack-Walking API (<a href="http://openjdk.java.net/jeps/259">JEP 259</a>)</h2>
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+public class VmAnonymous2 {
+
+  public static void main(String... args) {
+    Runnable r = () -&gt; {
+      StackWalker sw = <span class="fragment highlight-current-border">StackWalker.getInstance(<span class="fragment highlight-current-border">Option.SHOW_HIDDEN_FRAMES</span>)</span>;
+      sw.forEach(System.out::println);
+    };
+    r.run();
+  }
+}
+              </code>
+            </pre>
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
+$ <span class="fragment">java simonis.VmAnonymous
+simonis.VmAnonymous2.lambda$0(VmAnonymous2.java:14)
+simonis.VmAnonymous2$$Lambda$1/88579647.run(Unknown Source)               
+simonis.VmAnonymous2.main(VmAnonymous2.java:22)</span>
+              </code>
+            </pre>
+          </section>
+
+          <section>
+
+            <h2>VM-Anonymous classes</h2>
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+public class VmAnonymous3 {
+
+  public static void main(String... args) {
+    Runnable r = () -> {
+      new Exception("Hello World!") . printStackTrace();                       
+      <span class="fragment highlight-current-border">System.console().readLine()</span>;
+    };
+    r.run();
+  }
+}
+              </code>
+            </pre>
+            <div style="width: 100%">
+              <div style="float: left; width: 76%">
+
+                <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+                  <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
+$ <span class="fragment">java -XX:+UnlockDiagnosticVMOptions -XX:+ShowHiddenFrames\
+       simonis.VmAnonymous3
+java.lang.Exception: Hello World!
+      at simonis.VmAnonymous3.lambda$0(VmAnonymous3.java:7)
+      at simonis.VmAnonymous3$$Lambda$1/97730845.run(...)
+      at simonis.VmAnonymous3.main(VmAnonymous3.java:10)</span>
+                  </code>
+                </pre>
+
+              </div>
+              <div style="position:relative; float: right; width: 24%">
+
+<!--
+/share/output-jdk10-hs-opt/images/jdk/bin/jhsdb hsdb -J-Dswing.plaf.metal.userFont=adobe-helvetica-bold-14
+-->
+                <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+                  <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
+$ <span class="fragment">jps
+22436 VmAnonymous3
+$ </span><span class="fragment">jhsdb hsdb  </span>
+
+
+
+<span></span>
+                  </code>
+                </pre>
+
+              </div>
+            </div>
+
+          </section>
+
+          <section style="height:100%" data-background="images/SA_01.png" data-background-size="auto" data-background-color="#ffffff">
+          </section>
+
+          <section style="height:100%" data-background="images/SA_02.png" data-background-size="auto" data-background-color="#ffffff">
+          </section>
+
+          <section style="height:100%" data-background="images/SA_03a.png" data-background-size="auto" data-background-color="#ffffff">
+          </section>
+
+          <section style="height:100%" data-background="images/SA_04a.png" data-background-size="auto" data-background-color="#ffffff">
+          </section>
+
+          <section style="height:100%" data-background="images/SA_05a.png" data-background-size="auto" data-background-color="#ffffff">
           </section>
 
         </section>
