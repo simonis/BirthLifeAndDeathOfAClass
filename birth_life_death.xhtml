@@ -410,9 +410,20 @@ mark.border-no-bottom {
   (delete-region p1 p2)
   (insert resultStr)
 )
+(defun quote-fragment (p1 p2)
+  "Quotes '&', '<' and '>'."
+  (interactive "r")
+  (setq inputStr (buffer-substring-no-properties p1 p2))
+  (setq inputStr (replace-regexp-in-string "&" "&amp;" inputStr))
+  (setq inputStr (replace-regexp-in-string "<" "&lt;" inputStr))
+  (setq inputStr (replace-regexp-in-string ">" "&gt;" inputStr))
+  (delete-region p1 p2)
+  (insert inputStr)
+)
 
 (global-set-key (kbd "C-f") 'make-fragment)
 (global-set-key (kbd "C-S-f") 'make-fragment-simple)
+(global-set-key (kbd "C-S-q") 'quote-fragment)
 ;; revert key-binding
 ;; (global-set-key (kbd "C-f") 'forward-char)
 ;;
@@ -1324,7 +1335,280 @@ $ </span><span class="fragment" data-fragment-index="3">sapjvm/bin/java simonis.
 
             <h2>CHA - Class Hierarchy Analysis</h2>
 
+            <div style="width: 100%">
+              <div style="float: left; width: 40%">
+
+               <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+                  <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+package simonis;
+
+public class CHA {
+
+  static class A {
+    void f() {}
+  }
+
+  static class B extends A {
+    void f() {}
+  }
+
+  static void g(A a) {
+    a.f();
+  }
+
+  ...
+                  </code>
+                </pre>
+
+              </div>
+              <div style="position:relative; float: right; width: 60%">
+
+                <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+                  <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+<span/>
+  ...
+
+  public static void main (String[] args) {
+
+    A a = new A();
+    for (int i = 0; i &lt; 20_000; i++) {
+      g(a);  // JIT compile g()
+    }
+
+    B b = new B();
+
+    for (int i = 0; i &lt; 20_000; i++) {
+      g(a);
+    }
+  }
+}
+                  </code>
+                </pre>
+
+              </div>
+            </div>
           </section>
+
+          <section class="demo">
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
+$ java -Xbatch -XX:-TieredCompilation -XX:-UseOnStackReplacement \
+       <span class="fragment highlight-current-border">-XX:+PrintCompilation -XX:+PrintInlining</span> simonis.CHA
+<span class="fragment">   ...
+   1020    4    b      <span class="fragment highlight-current-border">simonis.CHA::g</span> (5 bytes)
+                          @ 1   <span class="fragment highlight-current-border">simonis.CHA$A::f (1 bytes)   inline (hot)</span>
+   1033    4           simonis.CHA::g (5 bytes)   <span class="fragment highlight-current-border">made not entrant</span>
+   1035    6    b      <span class="fragment highlight-current-border">simonis.CHA::g</span> (5 bytes)
+                          @ 1   <span class="fragment highlight-current-border">simonis.CHA$A::f (1 bytes)   inline (hot)</span>
+                           \-&gt; <span class="fragment highlight-current-border">TypeProfile (11699/11699 counts) = simonis/CHA$A</span>
+
+$ </span><span class="fragment">java -Xbatch -XX:-TieredCompilation -XX:-UseOnStackReplacement \
+       -XX:+PrintCompilation -XX:+PrintInlining <span class="fragment highlight-current-border">-Xlog:class+load</span> simonis.CHA</span>
+<span class="fragment">   ...
+   <span class="fragment highlight-current-border">[1,018s][info][class,load] simonis.CHA$A</span>
+   1020    4    b      simonis.CHA::g (5 bytes)
+                          @ 1   simonis.CHA$A::f (1 bytes)   inline (hot)
+   <span class="fragment highlight-current-border">[1,033s][info][class,load] simonis.CHA$B</span>
+   1033    4           simonis.CHA::g (5 bytes)   made not entrant
+   1035    6    b      simonis.CHA::g (5 bytes)
+                          @ 1   simonis.CHA$A::f (1 bytes)   inline (hot)
+                           \-&gt; TypeProfile (11699/11699 counts) = simonis/CHA$A</span>
+              </code>
+            </pre>
+          </section>
+
+          <section class="demo">
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
+$ java ... <span class="fragment highlight-current-border border-no-bottom" data-fragment-index="1">-XX:CompileCommand="print simonis.CHA::g"</span> \
+           <span class="fragment highlight-current-border border-no-top   " data-fragment-index="1">-XX:+TraceDependencies                   </span>  simonis.CHA
+<span class="fragment" data-fragment-index="2">...
+//  void simonis/CHA.g(simonis/CHA$A*)
+//
+000  B1:pushq   rbp              // Save rbp
+        subq    rsp, #16         // Create frame
+00c     testq   RSI, RSI         // <span class="fragment highlight-current-border border-no-bottom" data-fragment-index="3">parm0:simonis/CHA$A*</span>
+00f     je,s    B3               // <span class="fragment highlight-current-border border-no-top   " data-fragment-index="3">Null-pointer check  </span>
+011  B2:addq    rsp, 16          // Destroy frame
+        popq    rbp
+        testl   rax, [#poll_page]// Safepoint: poll for GC
+01c     ret
+...</span>
+<span class="fragment" data-fragment-index="4">Dependencies:
+<span class="fragment highlight-current-border" data-fragment-index="5">Dependency of type unique_concrete_method</span>
+  context = simonis.CHA$A
+  method  = {method} {0x00007fd6ac477868} 'f' '()V' in 'simonis/CHA$A'
+   [nmethod&lt;=klass]simonis.CHA$A
+...</span>
+              </code>
+            </pre>
+          </section>
+
+          <section class="demo">
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
+<span class="fragment highlight-current-border" data-fragment-index="1">[1,006s][info][class,load] simonis.CHA$B</span>
+<span class="fragment highlight-current-border" data-fragment-index="2">Failed dependency of type unique_concrete_method</span>
+  <span class="fragment highlight-current-border" data-fragment-index="3">context = simonis.CHA$A</span>
+  method  = {method} {0x00007fe759c00868} 'f' '()V' in 'simonis/CHA$A'
+  <span class="fragment highlight-current-border" data-fragment-index="3">witness = simonis.CHA$B</span>
+<span class="fragment highlight-current-border" data-fragment-index="4">Marked for deoptimization: Compiled method (c2) simonis.CHA::g (5 bytes)</span>
+...
+<span class="fragment" data-fragment-index="5">//  void simonis/CHA.g(simonis/CHA$A*)
+//
+...
+00c     movl    R11, [RSI + #8]     // compressed klass ptr (NullCheck RSI)
+010  B2:<span class="fragment highlight-current-border" data-fragment-index="6">cmpl    R11, 0x7fe7440920a0</span> // narrowklass: precise <span class="fragment highlight-current-border" data-fragment-index="6">klass simonis/CHA$A</span>
+017     jne,us  B4
+019  B3:addq    rsp, 16             // Destroy frame
+        popq    rbp
+        testl   rax, [#poll_page]   // Safepoint: poll for GC
+024     ret
+025  B4:<span class="fragment highlight-current-border" data-fragment-index="7">call    uncommon_trap(reason='class_check' action='maybe_recompile')</span></span>
+              </code>
+            </pre>
+          </section>
+
+          <section>
+
+            <h2>CHA - Class Hierarchy Analysis</h2>
+
+            <div style="width: 100%">
+              <div style="float: left; width: 40%">
+
+               <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+                  <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+package simonis;
+
+public class CHA2 {
+
+  static class A {
+    void f() {}
+  }
+
+  static class B extends A {
+    void f() {}
+  }
+
+  static void g(A a) {
+    a.f();
+  }
+
+  ...
+                  </code>
+                </pre>
+
+              </div>
+              <div style="position:relative; float: right; width: 60%">
+
+                <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+                  <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+<span/>
+  ...
+
+  public static void main (String[] args) {
+
+    A a = new A();
+    for (int i = 0; i &lt; 20_000; i++) {
+      g(a);  // JIT compile g()
+    }
+
+    <mark class="border">A b = new B()</mark>; // was B b = new B();
+
+    for (int i = 0; i &lt; 20_000; i++) {
+      g(a);
+    }
+  }
+}
+                  </code>
+                </pre>
+
+              </div>
+            </div>
+
+
+<div class="quiz fragment">
+  <!-- Quiz content -->
+  <div class="quiz-content">
+    <div class="quiz-header">
+      <h2>What happens if we change <br/><code style='font-size: smaller;'>B b = new B()</code> to <code style='font-size: smaller;'>A b = new B()</code><br/> ?</h2>
+    </div>
+    <div class="quiz-body">
+      <ol>
+        <li>Same behaviour as before</li>
+        <li>Same behaviour as before but without inlining of <code style='font-size: smaller;'>f()</code> into <code style='font-size: smaller;'>g()</code></li>
+        <li>No more recompilation</li>
+      </ol>
+    </div>
+    <div class="quiz-footer">
+      &nbsp;
+    </div>
+  </div>
+</div>
+          </section>
+
+          <section class="demo">
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
+$ java -Xbatch -XX:-TieredCompilation -XX:-UseOnStackReplacement \
+       -XX:+PrintCompilation -XX:+PrintInlining -Xlog:class+load simonis.CHA2
+<span class="fragment" data-fragment-index="1">   ...
+   <span class="fragment highlight-current-border border-no-bottom" data-fragment-index="2">[1,012s][info][class,load] simonis.CHA2$A</span>
+   <span class="fragment highlight-current-border border-no-top   " data-fragment-index="2">[1,018s][info][class,load] simonis.CHA2$B</span>
+   1025    4    b      simonis.CHA2::g (5 bytes)
+                          @ 1   simonis.CHA2$A::f (1 bytes)   inline (hot)
+                           \-> TypeProfile (6700/6700 counts) = simonis/CHA2$A
+
+$ </span><span class="fragment" data-fragment-index="4">java -Xbatch -XX:-TieredCompilation -XX:-UseOnStackReplacement <mark class="border">-noverify</mark> \
+       -XX:+PrintCompilation -XX:+PrintInlining -Xlog:class+load simonis.CHA2
+<span class="fragment" data-fragment-index="5">   ...
+   <span class="fragment highlight-current-border" data-fragment-index="6">[0,993s][info][class,load] simonis.CHA2$A</span>
+   995    4    b       simonis.CHA2::g (5 bytes)
+                          @ 1   simonis.CHA2$A::f (1 bytes)   inline (hot)
+   <span class="fragment highlight-current-border" data-fragment-index="7">[1,007s][info][class,load] simonis.CHA2$B</span>
+   1007   4            simonis.CHA2::g (5 bytes)   made not entrant
+   1008   6    b       simonis.CHA2::g (5 bytes)
+                          @ 1   simonis.CHA2$A::f (1 bytes)   inline (hot)
+                           \-> TypeProfile (11699/11699 counts) = simonis/CHA2$A
+</span></span>
+              </code>
+            </pre>
+
+
+<div class="quiz fragment" data-fragment-index="3">
+  <!-- Quiz content -->
+  <div class="quiz-content">
+    <div class="quiz-header">
+      <h2>What happens if we use <code style='font-size: smaller;'>-noverify</code> ?</h2>
+    </div>
+    <div class="quiz-body">
+      <ol>
+        <li>Same behaviour as before (just one compilation)</li>
+        <li>Initial behaviour (compilation / deoptimization / compilation)</li>
+      </ol>
+    </div>
+    <div class="quiz-footer">
+      &nbsp;
+    </div>
+  </div>
+</div>
+          </section>
+
+          <section data-background="images/JPoint2017_Lipsky_Verification.png" data-background-size="auto" data-background-color="#ffffff">
+
+            <a href="http://2017.jpoint.ru/en/talks/java-byte-code-verification-when-how-or-maybe-to-turn-it-off/">
+              <div style="width: 800px; height: 800px"></div>
+            </a>
+<!--
+http://downloads.contentful.com/oxjq45e8ilak/2SP89wQio8Ye6EEuy2McyK/6407e07416de0119be00c63bf2c8b1f9/Nikita_Lipsky._Java_Bytecode_Verification.pdf
+-->
+
+          </section>
+
         </section>
 
 
