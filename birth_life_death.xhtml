@@ -1320,12 +1320,13 @@ $ </span><span class="fragment" data-fragment-index="3">sapjvm/bin/java simonis.
               </code>
             </pre>
           </section>
-
+<!--
           <section>
 
             <h2>Initiating vs. Defining Class Loader</h2>
 
           </section>
+-->
         </section>
 
 
@@ -1618,7 +1619,206 @@ http://downloads.contentful.com/oxjq45e8ilak/2SP89wQio8Ye6EEuy2McyK/6407e07416de
 
             <h2>Class Instrumentation / Redefinition</h2>
 
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+package java.lang.instrument;
+
+public interface Instrumentation {
+  void  <span class="fragment highlight-current-border" data-fragment-index="1">addTransformer(<span class="fragment highlight-current-border" data-fragment-index="2">ClassFileTransformer transformer</span>)</span>;
+  public boolean isRetransformClassesSupported();
+  public void <span class="fragment highlight-current-border" data-fragment-index="5">retransformClasses(Class&lt;?&gt;... classes)</span>;
+  public boolean isRedefineClassesSupported();
+  public void <span class="fragment highlight-current-border" data-fragment-index="6">redefineClasses(ClassDefinition... definitions)</span>;
+}
+
+public interface <span class="fragment highlight-current-border" data-fragment-index="2">ClassFileTransformer</span> {
+  public <span class="fragment highlight-current-border" data-fragment-index="4">byte[]</span> <span class="fragment highlight-current-border" data-fragment-index="3">transform</span>(ClassLoader cl, String className
+                          Class&lt;?&gt; classBeingRedefined, ProtectionDomain pd,
+                          <span class="fragment highlight-current-border" data-fragment-index="4">byte[] classfileBuffer</span>)
+  ...
+}
+              </code>
+            </pre>
+<!--
+Arrays.asList(inst.getAllLoadedClasses()).stream().filter(c -> inst.isModifiableClass(c)).toArray(Class<?>[]::new)
+
+Can not retransform / redefine VM-Anonymous classes:
+
+8145964: NoClassDefFound error in transforming lambdas
+https://bugs.openjdk.java.net/browse/JDK-8145964
+-->
+
           </section>
+
+          <section>
+
+            <h2>Creating an Instrumentation Agent</h2>
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+Manifest-Version: 1.0
+Premain-Class: <span class="fragment highlight-current-border" data-fragment-index="1">simonis.InstAgent</span>
+Can-Retransform-Classes: true                                    
+Can-Redefine-Classes: true
+              </code>
+            </pre>
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+public class <span class="fragment highlight-current-border" data-fragment-index="1">InstAgent</span> {
+
+  public static void premain(String args, Instrumentation inst) {
+    ...
+  }
+}
+              </code>
+            </pre>
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
+$ jar cvfm <span class="fragment highlight-current-border" data-fragment-index="2">InstAgent.jar</span> manifest.mf simonis/InstAgent.class
+                                                                 
+$ java -javaagent:<span class="fragment highlight-current-border" data-fragment-index="3">InstAgent.jar</span>='arguments' ApplicationClass
+              </code>
+            </pre>
+          </section>
+
+          <section class="demo">
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+public class InstAgent {
+  static <span class="fragment highlight-current-border" data-fragment-index="1"><span class="fragment highlight-current-border" data-fragment-index="6">Instrumentation inst</span></span>;
+  static <span class="fragment highlight-current-border" data-fragment-index="2">String          pattern</span>;
+  static int             count;
+
+  public static void premain(<span class="fragment highlight-current-border" data-fragment-index="2">String args</span>, <span class="fragment highlight-current-border" data-fragment-index="1">Instrumentation inst</span>) {
+    <span class="fragment highlight-current-border" data-fragment-index="1">InstAgent.inst = inst</span>;
+    <span class="fragment highlight-current-border" data-fragment-index="2">pattern = args</span>;
+    <span class="fragment highlight-current-border" data-fragment-index="3">inst.addTransformer(new MethodInstrumentorTransformer(), true)</span>;
+  }
+  static class <span class="fragment highlight-current-border" data-fragment-index="3">MethodInstrumentorTransformer implements ClassFileTransformer</span> {
+    @Override
+    public byte[] <span class="fragment highlight-current-border" data-fragment-index="4">transform(.., String className, .., byte[] classfileBuffer)</span> {
+      if (!<span class="fragment highlight-current-border" data-fragment-index="5">className.startsWith(pattern)</span>) return classfileBuffer;
+      ... // Print a message at every method entry and exit
+    }
+  }
+  public static <span class="fragment highlight-current-border" data-fragment-index="6">Instrumentation getInst()</span> {
+    count++;
+    <span class="fragment highlight-current-border" data-fragment-index="6">return inst</span>;
+  }
+              </code>
+            </pre>
+          </section>
+
+          <section class="demo">
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+public class Instrument {
+  public static void main(String[] args) {
+    Runnable r = () -> {
+      new Exception("Hello World!") . printStackTrace();                        
+    };
+    r.run();
+  }
+}
+              </code>
+            </pre>
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
+$ java <span class="fragment highlight-current-border" data-fragment-index="1">-javaagent:InstAgent.jar=simonis</span> <span class="fragment highlight-current-border" data-fragment-index="1">-XX:+ShowHiddenFrames</span> simonis.Instrument
+<span class="fragment" data-fragment-index="2">=&gt; <span class="fragment highlight-current-border" data-fragment-index="3">transformimg simonis/Instrument</span>
+-&gt; <span class="fragment highlight-current-border" data-fragment-index="4">simonis.Instrument::main([Ljava/lang/String;)V</span>
+-&gt; <span class="fragment highlight-current-border" data-fragment-index="5">simonis.Instrument::lambda$0()V</span>
+java.lang.Exception: Hello World!
+	at simonis.Instrument.lambda$0(Instrument.java:7)
+	at <span class="fragment highlight-current-border" data-fragment-index="8">simonis.Instrument$$Lambda$1/1556595366.run</span>(&lt;Unknown&gt;:1000000)
+	at simonis.Instrument.main(Instrument.java:9)
+&lt;- <span class="fragment highlight-current-border" data-fragment-index="6">simonis.Instrument::lambda$0()V</span>
+&lt;- <span class="fragment highlight-current-border" data-fragment-index="7">simonis.Instrument::main([Ljava/lang/String;)V</span></span>
+              </code>
+            </pre>
+          </section>
+
+          <section class="demo">
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+public class Instrument2 {
+  static CountDownLatch <span class="fragment highlight-current-border"     data-fragment-index="2">stop = new CountDownLatch(1)</span>;
+
+  public static class A {
+    <span class="fragment highlight-current-border border-no-bottom"     data-fragment-index="1">public static Runnable getRunnable() {           </span>
+    <span class="fragment highlight-current-border border-no-bottom-top" data-fragment-index="1">  return () -&gt; {                                 </span>
+    <span class="fragment highlight-current-border border-no-bottom-top" data-fragment-index="1">    try { <span class="fragment highlight-current-border" data-fragment-index="2">stop.await()</span>; } catch (Exception e) {};</span>
+    <span class="fragment highlight-current-border border-no-bottom-top" data-fragment-index="1">  };                                             </span>
+    <span class="fragment highlight-current-border border-no-top"        data-fragment-index="1">}                                                </span>
+  }
+  public static void main(String[] args) throws ... {
+    Runnable <span class="fragment highlight-current-border" data-fragment-index="3">r = A.getRunnable()</span>;
+
+    for (int i = 0; i &lt; 10; i++) {
+      <span class="fragment highlight-current-border" data-fragment-index="4">InstAgent.getInst()</span>.<span class="fragment highlight-current-border" data-fragment-index="5">retransformClasses(Instrument2.A.class)</span>;
+      <span class="fragment highlight-current-border" data-fragment-index="6">new Thread(r).start()</span>;
+    }
+
+    <span class="fragment highlight-current-border" data-fragment-index="7">System.in.read()</span>;
+              </code>
+            </pre>
+          </section>
+
+          <section class="demo">
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
+$ java <span class="fragment highlight-current-border" data-fragment-index="1">-javaagent:InstAgent.jar='simonis/Instrument2$A'</span> simonis.Instrument2
+<span class="fragment" data-fragment-index="2">=&gt; <span class="fragment highlight-current-border" data-fragment-index="3">transformimg simonis/Instrument2$A</span>
+...
+=&gt; <span class="fragment highlight-current-border" data-fragment-index="4">re-transforming simonis/Instrument2$A</span>
+0&gt; <span class="fragment highlight-current-border" data-fragment-index="5">simonis.Instrument2$A::lambda$0()V</span>
+=&gt; <span class="fragment highlight-current-border" data-fragment-index="6">re-transforming simonis/Instrument2$A</span>
+1&gt; <span class="fragment highlight-current-border" data-fragment-index="7">simonis.Instrument2$A::lambda$0()V</span>
+=&gt; re-transforming simonis/Instrument2$A
+...
+9&gt; <span class="fragment highlight-current-border" data-fragment-index="8">simonis.Instrument2$A::lambda$0()V</span></span>
+
+<span class="fragment" data-fragment-index="10">$ <span class="fragment highlight-current-border" data-fragment-index="11">jcmd &lt;pid&gt; GC.class_stats</span> InstBytes,KlassBytes,MethodCount,Bytecodes</span>
+<span class="fragment" data-fragment-index="12">Index InstBytes KlassBytes Bytecodes ClassName
+  320        16        528         9 simonis.Instrument2$A$$Lambda$1/985922955
+  768         0        496        80 simonis.Instrument2
+  769         0        496        70 <span class="fragment highlight-current-border border-no-bottom"     data-fragment-index="13">simonis.Instrument2$A</span>
+  770         0        496        70 <span class="fragment highlight-current-border border-no-bottom-top" data-fragment-index="13">simonis.Instrument2$A</span>
+  ...         .        ...        .. <span class="fragment highlight-current-border border-no-bottom-top" data-fragment-index="13">.....................</span>
+  776         0        496        70 <span class="fragment highlight-current-border border-no-bottom-top" data-fragment-index="13">simonis.Instrument2$A</span>
+  777         0        496        70 <span class="fragment highlight-current-border border-no-top"        data-fragment-index="13">simonis.Instrument2$A</span></span>
+              </code>
+            </pre>
+
+
+<div class="quiz fragment" data-fragment-index="9">
+  <!-- Quiz content -->
+  <div class="quiz-content">
+    <div class="quiz-header">
+      <h2>How many versions of class <br/><code style='font-size: smaller;'>simonis.Instrument2$A</code> <br/>do we have ?</h2>
+    </div>
+    <div class="quiz-body">
+      <ol>
+        <li>One version</li>
+        <li>Several versions</li>
+        <li>10 versions</li>
+      </ol>
+    </div>
+    <div class="quiz-footer">
+      &nbsp;
+    </div>
+  </div>
+</div>
+          </section>
+
+
         </section>
 
 
