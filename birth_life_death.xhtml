@@ -1703,8 +1703,8 @@ public class InstAgent {
   static class <span class="fragment highlight-current-border" data-fragment-index="3">MethodInstrumentorTransformer implements ClassFileTransformer</span> {
     @Override
     public byte[] <span class="fragment highlight-current-border" data-fragment-index="4">transform(.., String className, .., byte[] classfileBuffer)</span> {
-      if (!<span class="fragment highlight-current-border" data-fragment-index="5">className.startsWith(pattern)</span>) return classfileBuffer;
-      ... // Print a message at every method entry and exit
+      if (!<span class="fragment highlight-current-border" data-fragment-index="5">className.startsWith(pattern)</span>) return null;  // No transformation,
+      ... // else transform to print a message at every method entry and exit
     }
   }
   public static <span class="fragment highlight-current-border" data-fragment-index="6">Instrumentation getInst()</span> {
@@ -2034,24 +2034,84 @@ public class Unload {
 public class Unload {
   public static class Z {
     public static void run() throws InterruptedException {
-      Thread.sleep(3_000);
-      System.out.println("simonis: exiting Z::run()");
+      <span class="fragment highlight-current-border border-no-bottom" data-fragment-index="1">Thread.sleep(3_000);                            </span>
+      <span class="fragment highlight-current-border border-no-top"    data-fragment-index="1">System.out.println("simonis: exiting Z::run()");</span>
     }
   }
   public static void main(String[] args) throws ... {
-    cl = new URLClassLoader(new URL[] { Unload.class.getResource("..") }, null);
-    Class&lt;?&gt; c = cl.loadClass("simonis.Unload$Z");
+    <span class="fragment highlight-current-border" data-fragment-index="2">ClassLoader cl = new URLClassLoader(...);</span>
+    <span class="fragment highlight-current-border" data-fragment-index="3">Class&lt;?&gt; c = cl.loadClass("simonis.Unload$Z");</span>
 
-    new MyThread(c).start(); // Call Z::run() reflectively
+    <span class="fragment highlight-current-border" data-fragment-index="4">new MyThread(c).start(); // Call Z::run() reflectively</span>
 
-    c = null;
-    cl = null;
-    systemGC();
+    <span class="fragment highlight-current-border border-no-bottom" data-fragment-index="5">c = null; </span>
+    <span class="fragment highlight-current-border border-no-top"    data-fragment-index="5">cl = null;</span>
+    <span class="fragment highlight-border" data-fragment-index="6">systemGC();</span>
 
-    systemGC();  
+    <span class="fragment highlight-border" data-fragment-index="6">systemGC();</span>
+              </code>
+            </pre>
+
+<div class="quiz fragment" data-fragment-index="7">
+  <!-- Quiz content -->
+  <div class="quiz-content">
+    <div class="quiz-header">
+      <h2>When will the class <code style='font-size: smaller;'>simonis.Unload.Z</code> be unloaded ?</h2>
+    </div>
+    <div class="quiz-body">
+      <ol>
+        <li>During the first System.gc()</li>
+        <li>During the second System.gc()</li>
+        <li>It depends on the time between the first and second System.gc()</li>
+        <li>Never</li>
+      </ol>
+    </div>
+    <div class="quiz-footer">
+      &nbsp;
+    </div>
+  </div>
+</div>
+          </section>
+
+          <section class="demo">
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
+$ java -Xlog:class+load,class+unload simonis.Unload | grep simonis
+<span class="fragment" data-fragment-index="1">[class,load] simonis.Unload
+[class,load  ] simonis.Unload$Z
+simonis: -&gt; Calling System.gc() ...
+simonis: &lt;- System.gc() done
+<span class="fragment" data-fragment-index="2"><span class="fragment highlight-current-border" data-fragment-index="2">&lt;RETURN&gt; // quick</span></span>
+<span class="fragment" data-fragment-index="3">simonis: -&gt; Calling System.gc() ...
+simonis: &lt;- System.gc() done
+<span class="fragment highlight-current-border" data-fragment-index="4">simonis: exiting Z::run()</span></span></span>
+              </code>
+            </pre>
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
+<span class="fragment" data-fragment-index="5">$ java -Xlog:class+load,class+unload simonis.Unload | grep simonis</span>
+<span class="fragment" data-fragment-index="6">[class,load] simonis.Unload
+[class,load  ] simonis.Unload$Z
+simonis: -&gt; Calling System.gc() ...
+simonis: &lt;- System.gc() done
+<span class="fragment" data-fragment-index="7"><span class="fragment highlight-current-border" data-fragment-index="7">simonis: exiting Z::run()</span></span>
+<span class="fragment" data-fragment-index="8"><span class="fragment highlight-current-border" data-fragment-index="8">&lt;RETURN&gt; // wait for more than 3 seconds ...</span></span>
+<span class="fragment" data-fragment-index="9">simonis: -&gt; Calling System.gc() ...
+[class,<span class="fragment highlight-current-border" data-fragment-index="10">unload</span>] unloading class <span class="fragment highlight-current-border" data-fragment-index="10">simonis.Unload$Z</span>
+simonis: &lt;- System.gc() done</span></span>
               </code>
             </pre>
           </section>
+
+        </section>
+
+        <section>
+
+          <h3 style="text-transform: none;"><a href="https://github.com/simonis/BirthLifeAndDeathOfAClass">https://github.com/simonis/BirthLifeAndDeathOfAClass</a></h3>
+
+          <h3 style="text-transform: none;"><a href="https://simonis.github.io/BirthLifeAndDeathOfAClass">https://simonis.github.io/BirthLifeAndDeathOfAClass</a></h3>
 
         </section>
 
