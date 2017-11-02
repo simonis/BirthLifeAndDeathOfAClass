@@ -1912,6 +1912,82 @@ simonis: &lt;- System.gc() done
             <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
               <code class="java" data-trim="true" data-noescape="true" style="height:100%">
 public class Unload {
+  static Object <span class="fragment highlight-current-border" data-fragment-index="2">keepAlive</span>;
+
+  public static class Y {
+    <span class="fragment highlight-current-border border-no-bottom"        data-fragment-index="1">protected void finalize() throws Throwable {</span>
+    <span class="fragment highlight-current-border border-no-bottom-top"    data-fragment-index="1">  <span class="fragment highlight-current-border" data-fragment-index="2">keepAlive = this</span>;                         </span>
+    <span class="fragment highlight-current-border border-no-top"           data-fragment-index="1">}                                           </span>
+  }
+  public static void main(String[] args) throws ... {
+    <span class="fragment highlight-current-border" data-fragment-index="3">ClassLoader cl = new URLClassLoader(...);</span>
+    <span class="fragment highlight-current-border" data-fragment-index="4">o = cl.loadClass("simonis.Unload$Y").newInstance();</span>
+    <span class="fragment highlight-current-border border-no-bottom" data-fragment-index="5">o = null; </span>
+    <span class="fragment highlight-current-border border-no-top"    data-fragment-index="5">cl = null;</span>
+    <span class="fragment highlight-current-border" data-fragment-index="6">systemGC();</span>
+
+    <span class="fragment highlight-current-border" data-fragment-index="7">keepAlive = null;</span>
+
+    <span class="fragment highlight-current-border" data-fragment-index="8">systemGC();</span>
+              </code>
+            </pre>
+
+<div class="quiz fragment" data-fragment-index="9">
+  <!-- Quiz content -->
+  <div class="quiz-content">
+    <div class="quiz-header">
+      <h2>When will class <code style='font-size: smaller;'>simonis.Unload.Y</code> be unloaded ?</h2>
+    </div>
+    <div class="quiz-body">
+      <ol>
+        <li>During the first System.gc()</li>
+        <li>During the second System.gc()</li>
+        <li>Never</li>
+      </ol>
+    </div>
+    <div class="quiz-footer">
+      &nbsp;
+    </div>
+  </div>
+</div>
+          </section>
+
+          <section class="demo">
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
+$ java -Xlog:class+load,class+unload simonis.Unload | grep simonis
+<span class="fragment" data-fragment-index="1">[class,<span class="fragment highlight-current-border" data-fragment-index="2">load</span>  ] <span class="fragment highlight-current-border" data-fragment-index="2">simonis.Unload</span>
+[class,<span class="fragment highlight-current-border" data-fragment-index="2">load</span>  ] <span class="fragment highlight-current-border" data-fragment-index="2">simonis.Unload$Y</span>
+<span class="fragment highlight-current-border border-no-bottom" data-fragment-index="3">simonis: -&gt; Calling System.gc() ...</span>
+<span class="fragment highlight-current-border border-no-top"    data-fragment-index="3">simonis: &lt;- System.gc() done       </span>
+[class,<span class="fragment highlight-current-border" data-fragment-index="4">load</span>  ] <span class="fragment highlight-current-border" data-fragment-index="4">simonis.Unload</span>
+&lt;RETURN&gt;
+<span class="fragment highlight-current-border" data-fragment-index="5">simonis: -&gt; Calling System.gc() ...</span>
+[class,<span class="fragment highlight-current-border" data-fragment-index="6">unload</span>] unloading class <span class="fragment highlight-current-border" data-fragment-index="6">simonis.Unload</span>
+[class,<span class="fragment highlight-current-border" data-fragment-index="6">unload</span>] unloading class <span class="fragment highlight-current-border" data-fragment-index="6">simonis.Unload$Y</span>
+simonis: &lt;- System.gc() done</span>
+<span class="fragment" data-fragment-index="7">$ java -Xlog:class+load<span class="fragment highlight-current-border" data-fragment-index="8">=debug</span>,class+unload<span class="fragment highlight-current-border" data-fragment-index="8">=debug</span> simonis.Unload | grep simonis</span>
+<span class="fragment" data-fragment-index="9">[class,<span class="fragment highlight-current-border" data-fragment-index="10">load</span>  ] simonis.Unload <span class="fragment highlight-current-border" data-fragment-index="10">klass: 0x100060030</span> '<span class="fragment highlight-current-border" data-fragment-index="10">ClassLoaders$AppClassLoader</span>'
+[class,<span class="fragment highlight-current-border" data-fragment-index="11">load</span>  ] <span class="fragment highlight-current-border" data-fragment-index="11">simonis.Unload$Y</span> <span class="fragment highlight-current-border" data-fragment-index="11"><span class="fragment highlight-current-border" data-fragment-index="14">klass: 0x100074430</span></span> '<span class="fragment highlight-current-border" data-fragment-index="11">java/net/URLClassLoader</span>'
+simonis: -&gt; Calling System.gc() ...
+simonis: &lt;- System.gc() done
+[class,<span class="fragment highlight-current-border" data-fragment-index="12">load</span>  ] <span class="fragment highlight-current-border" data-fragment-index="12">simonis.Unload</span> <span class="fragment highlight-current-border" data-fragment-index="12"><span class="fragment highlight-current-border" data-fragment-index="13">klass: 0x100074628</span></span> '<span class="fragment highlight-current-border" data-fragment-index="12">java/net/URLClassLoader</span>'
+&lt;RETURN&gt;
+simonis: -&gt; Calling System.gc() ...
+[class,<span class="fragment highlight-current-border" data-fragment-index="13">unload</span>] unloading class <span class="fragment highlight-current-border" data-fragment-index="13">simonis.Unload</span> <span class="fragment highlight-current-border" data-fragment-index="13">0x100074628</span>
+[class,<span class="fragment highlight-current-border" data-fragment-index="14">unload</span>] unloading <span class="fragment highlight-current-border" data-fragment-index="14">class simonis.Unload$Y</span> <span class="fragment highlight-current-border" data-fragment-index="14">0x100074430</span></span>
+              </code>
+            </pre>
+          </section>
+
+          <section class="demo">
+
+            <h2>Class unloading and finalization</h2>
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+public class Unload {
   static Object keepAlive;
 
   public static class Y {
@@ -1926,40 +2002,29 @@ public class Unload {
     cl = null;
     systemGC();
 
-    keepAlive = null;
+    <span class="fragment highlight-border">// keepAlive = null;</span>
 
     systemGC();
               </code>
             </pre>
-          </section>
 
-          <section class="demo">
-
-            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
-              <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
-$ <span class="fragment" data-fragment-index="5">java <span class="fragment highlight-current-border" data-fragment-index="6">-Xlog:class+load,class+unload</span> simonis.Unload | grep simonis</span>
-[class,load  ] simonis.Unload
-[class,load  ] simonis.Unload$Y
-simonis: -&gt; Calling System.gc() ...
-simonis: &lt;- System.gc() done
-[class,load  ] simonis.Unload
-&lt;RETURN&gt;
-simonis: -&gt; Calling System.gc() ...
-[class,unload] unloading class simonis.Unload
-[class,unload] unloading class simonis.Unload$Y
-simonis: &lt;- System.gc() done
-$ <span class="fragment" data-fragment-index="5">java <span class="fragment highlight-current-border" data-fragment-index="6">-Xlog:class+load=debug,class+unload=debug</span> simonis.Unload | grep simonis</span>
-[class,load  ] simonis.Unload klass: 0x100060030 'ClassLoaders$AppClassLoader'
-[class,load  ] simonis.Unload$Y klass: 0x100074430 'java/net/URLClassLoader'
-simonis: -&gt; Calling System.gc() ...
-simonis: &lt;- System.gc() done
-[class,load  ] simonis.Unload klass: 0x100074628 'java/net/URLClassLoader'
-&lt;RETURN&gt;
-simonis: -&gt; Calling System.gc() ...
-[class,unload] unloading class simonis.Unload 0x100074628
-[class,unload] unloading class simonis.Unload$Y 0x100074430
-              </code>
-            </pre>
+<div class="quiz fragment">
+  <!-- Quiz content -->
+  <div class="quiz-content">
+    <div class="quiz-header">
+      <h2>What happens when we remove <code style='font-size: smaller;'>keepAlive = null</code> ?</h2>
+    </div>
+    <div class="quiz-body">
+      <ol>
+        <li>No unloading any more</li>
+        <li>Nothing changes</li>
+      </ol>
+    </div>
+    <div class="quiz-footer">
+      &nbsp;
+    </div>
+  </div>
+</div>
           </section>
 
           <section class="demo">
