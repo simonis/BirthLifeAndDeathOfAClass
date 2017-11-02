@@ -600,14 +600,17 @@ Constant pool:
 
             <ul>
               <li>Top-Level
+              <li> Nested
                 <ul>
                   <li>Static Nested (Nested)</li>
                   <li>Non-Static Nested (Inner)
-                  <ul>
-                  <li>Local</li>
-                  <li>Anonymous</li>
-                  </ul></li>
+                    <ul>
+                      <li>Local</li>
+                      <li>Anonymous</li>
+                    </ul>
+                  </li>
                 </ul>
+              </li>
               </li>
               <li>VM-Anonymous</li>
             </ul>
@@ -1818,6 +1821,13 @@ $ java <span class="fragment highlight-current-border" data-fragment-index="1">-
 </div>
           </section>
 
+          <section data-background="images/Arhipov_ClassReloading.png" data-background-size="auto" data-background-color="#ffffff">
+
+            <a href="https://www.youtube.com/watch?v=SVrGupWoXAc">
+              <div style="width: 800px; height: 800px"></div>
+            </a>
+
+          </section>
 
         </section>
 
@@ -1845,7 +1855,139 @@ $ java <span class="fragment highlight-current-border" data-fragment-index="1">-
 
             <h2>Class unloading</h2>
 
+            <ul>
+              <li>It's an <em>optimization</em> (not required by the spec)</li>
+              <li>Can't simply unload/reload on request:
+                <ul>
+                  <li><a href="http://docs.oracle.com/javase/specs/jvms/se9/html/jvms-5.html#jvms-5.3">JVMS §5.3</a>:
+                    "<em>Given the same name, <br/>a good class loader should always return the same Class object</em>"</li>
+                  <li>Static initializers</li>
+                </ul>
+              </li>
+              <li>GC dependant (happens at safepoint)
+                <ul>
+                  <li><a href="https://bugs.openjdk.java.net/browse/JDK-8049421">8049421: G1 Class Unloading after completing concurrent mark</a></li>
+                </ul>
+              </li>
+              <li>Interacts with object finalization (<a href="https://docs.oracle.com/javase/specs/jls/se9/html/jls-12.html#jls-12.7">JVMLS §12.7</a>)</li>
+            </ul>
           </section>
+
+          <section class="demo">
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+public class Unload {
+
+  public static class X {}
+
+  public static void main(String[] args) throws ... {
+
+    <span class="fragment highlight-current-border border-no-bottom" data-fragment-index="1">ClassLoader cl = new URLClassLoader(                  </span>
+    <span class="fragment highlight-current-border border-no-top"    data-fragment-index="1">  new URL[] { Unload.class.getResource("..") }, null);</span>
+    <span class="fragment highlight-current-border"                  data-fragment-index="2">Object o = cl.loadClass("simonis.Unload$X").newInstance();</span>    
+    <span class="fragment highlight-current-border border-no-bottom" data-fragment-index="3">o = null; </span>
+    <span class="fragment highlight-current-border border-no-top"    data-fragment-index="3">cl = null;</span>
+
+    <span class="fragment highlight-current-border"                  data-fragment-index="4">systemGC();</span>
+              </code>
+            </pre>
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
+$ <span class="fragment" data-fragment-index="5">java <span class="fragment highlight-current-border" data-fragment-index="6">-Xlog:class+load,class+unload</span> simonis.Unload | grep simonis</span>
+<span class="fragment" data-fragment-index="7">[info][class,load  ] simonis.Unload
+[info][class,<span class="fragment highlight-current-border" data-fragment-index="8">load</span>  ] <span class="fragment highlight-current-border" data-fragment-index="8">simonis.Unload$X</span>
+simonis: -&gt; <span class="fragment highlight-current-border" data-fragment-index="9">Calling System.gc() ...</span>
+[info][class,<span class="fragment highlight-current-border" data-fragment-index="10">unload</span>] unloading class <span class="fragment highlight-current-border" data-fragment-index="10">simonis.Unload$X</span>
+simonis: &lt;- System.gc() done
+</span>
+              </code>
+            </pre>
+          </section>
+
+          <section class="demo">
+
+            <h2>Class unloading and finalization</h2>
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+public class Unload {
+  static Object keepAlive;
+
+  public static class Y {
+    protected void finalize() throws Throwable {
+      keepAlive = this;
+    }
+  }
+  public static void main(String[] args) throws ... {
+    ClassLoader cl = new URLClassLoader(...);
+    o = cl.loadClass("simonis.Unload$Y").newInstance();
+    o = null;
+    cl = null;
+    systemGC();
+
+    keepAlive = null;
+
+    systemGC();
+              </code>
+            </pre>
+          </section>
+
+          <section class="demo">
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
+$ <span class="fragment" data-fragment-index="5">java <span class="fragment highlight-current-border" data-fragment-index="6">-Xlog:class+load,class+unload</span> simonis.Unload | grep simonis</span>
+[class,load  ] simonis.Unload
+[class,load  ] simonis.Unload$Y
+simonis: -&gt; Calling System.gc() ...
+simonis: &lt;- System.gc() done
+[class,load  ] simonis.Unload
+&lt;RETURN&gt;
+simonis: -&gt; Calling System.gc() ...
+[class,unload] unloading class simonis.Unload
+[class,unload] unloading class simonis.Unload$Y
+simonis: &lt;- System.gc() done
+$ <span class="fragment" data-fragment-index="5">java <span class="fragment highlight-current-border" data-fragment-index="6">-Xlog:class+load=debug,class+unload=debug</span> simonis.Unload | grep simonis</span>
+[class,load  ] simonis.Unload klass: 0x100060030 'ClassLoaders$AppClassLoader'
+[class,load  ] simonis.Unload$Y klass: 0x100074430 'java/net/URLClassLoader'
+simonis: -&gt; Calling System.gc() ...
+simonis: &lt;- System.gc() done
+[class,load  ] simonis.Unload klass: 0x100074628 'java/net/URLClassLoader'
+&lt;RETURN&gt;
+simonis: -&gt; Calling System.gc() ...
+[class,unload] unloading class simonis.Unload 0x100074628
+[class,unload] unloading class simonis.Unload$Y 0x100074430
+              </code>
+            </pre>
+          </section>
+
+          <section class="demo">
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+public class Unload {
+  public static class Z {
+    public static void run() throws InterruptedException {
+      Thread.sleep(3_000);
+      System.out.println("simonis: exiting Z::run()");
+    }
+  }
+  public static void main(String[] args) throws ... {
+    cl = new URLClassLoader(new URL[] { Unload.class.getResource("..") }, null);
+    Class&lt;?&gt; c = cl.loadClass("simonis.Unload$Z");
+
+    new MyThread(c).start(); // Call Z::run() reflectively
+
+    c = null;
+    cl = null;
+    systemGC();
+
+    systemGC();  
+              </code>
+            </pre>
+          </section>
+
         </section>
 
 <!--

@@ -5,7 +5,17 @@ import java.net.URL;
 import java.net.URLClassLoader;
 
 /*
- * /share/output-jdk9-dev-dbg/images/jdk/bin/java -cp /tmp/javac/ -agentpath:bin/traceClassAgent.so=simonis -Xlog:class*=trace,load*=trace,load*=trace,loader*=trace simonis.Dependencies file:///tmp/b/ file:///tmp/a/ | grep class,loader,constraints
+
+from src:
+  g++ -fPIC -shared -I /share/output-jdk9-dev-dbg/images/jdk/include/ -I /share/output-jdk9-dev-dbg/images/jdk/include/linux/ -o ../bin/traceClassAgent.so jvmti/traceClassAgent.cpp
+
+  /share/software/Java/jdk9-b181/bin/javac -cp /tmp/javac/ -d /tmp/javac/ src/simonis/Dependencies.java
+  mv /tmp/javac/simonis/Dependencies\$A.class /tmp/a/simonis/
+  mv /tmp/javac/simonis/Dependencies\$X.class /tmp/a/simonis/
+  mv /tmp/javac/simonis/Dependencies\$B.class /tmp/b/simonis/
+  cp /tmp/a/simonis/Dependencies\$X.class /tmp/b/simonis/
+
+  /share/output-jdk9-dev-dbg/images/jdk/bin/java -cp /tmp/javac/ -agentpath:bin/traceClassAgent.so=simonis -Xlog:class*=trace,load*=trace,load*=trace,loader*=trace simonis.Dependencies file:///tmp/b/ file:///tmp/a/ | grep class,loader,constraints
  * 
  */
 public class Dependencies {
