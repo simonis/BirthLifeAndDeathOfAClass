@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/PR-SVG-20010719/DTD/svg10.dtd">
+<svg width="69cm" height="39cm" viewBox="-181 -61 1362 762" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="-50" y="280">
+    <tspan x="-50" y="280"></tspan>
+  </text>
+  <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="-70" y="320">
+    <tspan x="-70" y="320"></tspan>
+  </text>
+  <g>
+    <g>
+      <rect style="fill: #ffffff" x="60" y="-60" width="880" height="760"/>
+      <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="60" y="-60" width="880" height="760"/>
+    </g>
+    <text font-size="18.0622" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="827.928" y="680">
+      <tspan x="827.928" y="680">Metaspace</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: #ffffff" x="-180" y="-60" width="220" height="760"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="-180" y="-60" width="220" height="760"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="-70" y="323.9">
+      <tspan x="-70" y="323.9"></tspan>
+    </text>
+  </g>
+  <text font-size="18.0622" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="-81.5856" y="684.757">
+    <tspan x="-81.5856" y="684.757">Code Cache</tspan>
+  </text>
+  <g>
+    <g>
+      <rect style="fill: #ffffff" x="960" y="-60" width="220" height="760"/>
+      <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="960" y="-60" width="220" height="760"/>
+    </g>
+    <text font-size="18.0622" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="1075.24" y="681.586">
+      <tspan x="1075.24" y="681.586">Java Heap</tspan>
+    </text>
+  </g>
+  <g>
+    <text font-size="18.0622" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="1000" y="0">
+      <tspan x="1000" y="0">Foo</tspan>
+    </text>
+    <g>
+      <g>
+        <rect style="fill: #e5e5e5" x="1000" y="20" width="140" height="40"/>
+        <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="1000" y="20" width="140" height="40"/>
+        <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1070" y="43.9">
+          <tspan x="1070" y="43.9"></tspan>
+        </text>
+      </g>
+      <g>
+        <rect style="fill: #00a300" x="1000" y="20" width="20" height="40"/>
+        <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="1000" y="20" width="20" height="40"/>
+        <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1010" y="43.9">
+          <tspan x="1010" y="43.9"></tspan>
+        </text>
+      </g>
+      <g>
+        <rect style="fill: #ffa500" x="1020" y="20" width="20" height="40"/>
+        <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="1020" y="20" width="20" height="40"/>
+        <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1030" y="43.9">
+          <tspan x="1030" y="43.9"></tspan>
+        </text>
+      </g>
+    </g>
+  </g>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x1="1031" y1="39.6669" x2="921.972" y2="39.967"/>
+    <polygon style="fill: #000000" points="914.472,39.9877 924.458,34.9602 921.972,39.967 924.486,44.9601 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" points="914.472,39.9877 924.458,34.9602 921.972,39.967 924.486,44.9601 "/>
+  </g>
+  <g>
+    <rect style="fill: #e5e5e5" x="760" y="60" width="150" height="40"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="760" y="60" width="150" height="40"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="835" y="83.9">
+      <tspan x="835" y="83.9">_next_link</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: #ff9292" x="760" y="20" width="150" height="40"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="760" y="20" width="150" height="40"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="835" y="43.9">
+      <tspan x="835" y="43.9"></tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: #e5e5e5" x="760" y="140" width="150" height="40"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="760" y="140" width="150" height="40"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="835" y="163.9">
+      <tspan x="835" y="163.9">_class_loader_data</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: #e5e5e5" x="760" y="180" width="150" height="40"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="760" y="180" width="150" height="40"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="835" y="203.9">
+      <tspan x="835" y="203.9">_methods</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: #e5e5e5" x="760" y="220" width="150" height="40"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="760" y="220" width="150" height="40"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="835" y="243.9">
+      <tspan x="835" y="243.9">_constants</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: #e5e5e5" x="760" y="100" width="150" height="40"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="760" y="100" width="150" height="40"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="835" y="123.9">
+      <tspan x="835" y="123.9">_java_mirror</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: #e5e5e5" x="760" y="260" width="150" height="40"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="760" y="260" width="150" height="40"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="835" y="283.9">
+      <tspan x="835" y="283.9">...</tspan>
+    </text>
+  </g>
+  <text font-size="18.0622" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="760" y="-1.15463e-13">
+    <tspan x="760" y="-1.15463e-13">InstanceKlass*</tspan>
+  </text>
+  <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="835" y="80">
+    <tspan x="835" y="80"></tspan>
+  </text>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x1="780" y1="80" x2="737.61" y2="80.2806"/>
+    <polygon style="fill: #000000" points="730.11,80.3303 740.076,75.2642 737.61,80.2806 740.143,85.264 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" points="730.11,80.3303 740.076,75.2642 737.61,80.2806 740.143,85.264 "/>
+  </g>
+  <g>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" points="912.333,119.667 954.734,119.667 954.734,120 988.028,120 "/>
+    <polygon style="fill: #000000" points="995.528,120 985.528,125 988.028,120 985.528,115 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" points="995.528,120 985.528,125 988.028,120 985.528,115 "/>
+  </g>
+  <g>
+    <g>
+      <g>
+        <rect style="fill: #e5e5e5" x="1000" y="100" width="140" height="40"/>
+        <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="1000" y="100" width="140" height="40"/>
+        <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1070" y="123.9">
+          <tspan x="1070" y="123.9"></tspan>
+        </text>
+      </g>
+      <g>
+        <rect style="fill: #00a300" x="1000" y="100" width="20" height="40"/>
+        <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="1000" y="100" width="20" height="40"/>
+        <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1010" y="123.9">
+          <tspan x="1010" y="123.9"></tspan>
+        </text>
+      </g>
+      <g>
+        <rect style="fill: #ffa500" x="1020" y="100" width="20" height="40"/>
+        <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="1020" y="100" width="20" height="40"/>
+        <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1030" y="123.9">
+          <tspan x="1030" y="123.9"></tspan>
+        </text>
+      </g>
+    </g>
+    <text font-size="18.0622" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="1000" y="90">
+      <tspan x="1000" y="90">Class&lt;Foo&gt;</tspan>
+    </text>
+  </g>
+  <g>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" points="701.972,40 720,40 720,40 748.028,40 "/>
+    <polygon style="fill: #000000" points="694.472,40 704.472,35 701.972,40 704.472,45 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" points="694.472,40 704.472,35 701.972,40 704.472,45 "/>
+    <polygon style="fill: #000000" points="755.528,40 745.528,45 748.028,40 745.528,35 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" points="755.528,40 745.528,45 748.028,40 745.528,35 "/>
+  </g>
+  <g>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" points="690,160 497.667,160 497.667,320 1078.1,320 1078.1,250.819 "/>
+    <polygon style="fill: #000000" points="1078.1,243.319 1083.1,253.319 1078.1,250.819 1073.1,253.319 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" points="1078.1,243.319 1083.1,253.319 1078.1,250.819 1073.1,253.319 "/>
+  </g>
+  <g>
+    <g>
+      <rect style="fill: #e5e5e5" x="540" y="60" width="150" height="40"/>
+      <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="540" y="60" width="150" height="40"/>
+      <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="615" y="83.9">
+        <tspan x="615" y="83.9">_klasses</tspan>
+      </text>
+    </g>
+    <g>
+      <rect style="fill: #ff9292" x="540" y="20" width="150" height="40"/>
+      <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="540" y="20" width="150" height="40"/>
+      <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="615" y="43.9">
+        <tspan x="615" y="43.9"></tspan>
+      </text>
+    </g>
+    <g>
+      <rect style="fill: #e5e5e5" x="540" y="140" width="150" height="40"/>
+      <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="540" y="140" width="150" height="40"/>
+      <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="615" y="163.9">
+        <tspan x="615" y="163.9">_class_loader</tspan>
+      </text>
+    </g>
+    <g>
+      <rect style="fill: #e5e5e5" x="540" y="100" width="150" height="40"/>
+      <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="540" y="100" width="150" height="40"/>
+      <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="615" y="123.9">
+        <tspan x="615" y="123.9">...</tspan>
+      </text>
+    </g>
+    <g>
+      <rect style="fill: #e5e5e5" x="540" y="180" width="150" height="40"/>
+      <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="540" y="180" width="150" height="40"/>
+      <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="615" y="203.9">
+        <tspan x="615" y="203.9">_next</tspan>
+      </text>
+    </g>
+    <text font-size="18.0622" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="540" y="-1.77636e-14">
+      <tspan x="540" y="-1.77636e-14">ClassLoaderData*</tspan>
+    </text>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="640" y="80">
+      <tspan x="640" y="80"></tspan>
+    </text>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="640" y="80">
+      <tspan x="640" y="80"></tspan>
+    </text>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="600" y="80">
+      <tspan x="600" y="80"></tspan>
+    </text>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="640" y="80">
+      <tspan x="640" y="80"></tspan>
+    </text>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="640" y="80">
+      <tspan x="640" y="80"></tspan>
+    </text>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="615" y="160">
+      <tspan x="615" y="160"></tspan>
+    </text>
+    <g>
+      <line style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x1="616.333" y1="210.334" x2="616.333" y2="245.028"/>
+      <polygon style="fill: #000000" points="616.333,252.528 611.333,242.528 616.333,245.028 621.333,242.528 "/>
+      <polygon style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" points="616.333,252.528 611.333,242.528 616.333,245.028 621.333,242.528 "/>
+    </g>
+  </g>
+  <g>
+    <g>
+      <g>
+        <rect style="fill: #e5e5e5" x="1000" y="200" width="140" height="40"/>
+        <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="1000" y="200" width="140" height="40"/>
+        <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1070" y="223.9">
+          <tspan x="1070" y="223.9"></tspan>
+        </text>
+      </g>
+      <text font-size="18.0622" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="1000" y="190">
+        <tspan x="1000" y="190">ClassLoader</tspan>
+      </text>
+    </g>
+    <g>
+      <line style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x1="1120" y1="200" x2="1120" y2="151.972"/>
+      <polygon style="fill: #000000" points="1120,144.472 1125,154.472 1120,151.972 1115,154.472 "/>
+      <polygon style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" points="1120,144.472 1125,154.472 1120,151.972 1115,154.472 "/>
+    </g>
+    <g>
+      <rect style="fill: #00a300" x="1000" y="200" width="20" height="40"/>
+      <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="1000" y="200" width="20" height="40"/>
+      <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1010" y="223.9">
+        <tspan x="1010" y="223.9"></tspan>
+      </text>
+    </g>
+    <g>
+      <rect style="fill: #ffa500" x="1020" y="200" width="20" height="40"/>
+      <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="1020" y="200" width="20" height="40"/>
+      <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1030" y="223.9">
+        <tspan x="1030" y="223.9"></tspan>
+      </text>
+    </g>
+  </g>
+  <g>
+    <g>
+      <g>
+        <rect style="fill: #e5e5e5" x="100" y="20" width="150" height="40"/>
+        <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="100" y="20" width="150" height="40"/>
+        <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="175" y="43.9">
+          <tspan x="175" y="43.9">_head</tspan>
+        </text>
+      </g>
+      <g>
+        <rect style="fill: #ff9292" x="100" y="-20" width="150" height="40"/>
+        <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="100" y="-20" width="150" height="40"/>
+        <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="175" y="3.9">
+          <tspan x="175" y="3.9"></tspan>
+        </text>
+      </g>
+      <g>
+        <rect style="fill: #e5e5e5" x="100" y="60" width="150" height="40"/>
+        <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="100" y="60" width="150" height="40"/>
+        <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="175" y="83.9">
+          <tspan x="175" y="83.9">...</tspan>
+        </text>
+      </g>
+      <text font-size="18.0622" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="100" y="-40">
+        <tspan x="100" y="-40">ClassLoaderDataGraph*</tspan>
+      </text>
+      <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="180" y="40">
+        <tspan x="180" y="40"></tspan>
+      </text>
+    </g>
+    <g>
+      <line style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x1="250" y1="40" x2="528.028" y2="40"/>
+      <polygon style="fill: #000000" points="535.528,40 525.528,45 528.028,40 525.528,35 "/>
+      <polygon style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" points="535.528,40 525.528,45 528.028,40 525.528,35 "/>
+    </g>
+  </g>
+</svg>
