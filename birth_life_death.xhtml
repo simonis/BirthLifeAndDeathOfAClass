@@ -615,7 +615,7 @@ Constant pool:
               <li>VM-Anonymous</li>
             </ul>
           </section>
-
+<!--
           <section class="demo">
 
             <h2>Top-Level classes</h2>
@@ -653,7 +653,7 @@ public class TopLevel {
               <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
 $ javac simonis/TopLevel.java
 $ <span class="fragment">ll simonis/
--rw-rw-r-- 1 simonis simonis 1852 Okt 13 09:58 TopLevel.class
+-rw-rw-r- - 1 simonis simonis 1852 Okt 13 09:58 TopLevel.class
 $ </span><span class="fragment">java simonis.TopLevel</span>
 <span class="fragment">Name:             simonis.TopLevel
 Package name:     simonis
@@ -695,8 +695,8 @@ public class Nested {
               <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
 $ <span class="fragment" data-fragment-index="1">javac simonis/Nested.java
 $ </span><span class="fragment" data-fragment-index="2">ll simonis/
--rw-rw-r-- 1 simonis simonis 1085 Okt 13 10:02 Nested.class
--rw-rw-r-- 1 simonis simonis  271 Okt 13 10:02 Nested$NestedClass.class
+-rw-rw-r- - 1 simonis simonis 1085 Okt 13 10:02 Nested.class
+-rw-rw-r- - 1 simonis simonis  271 Okt 13 10:02 Nested$NestedClass.class
 $ </span><span class="fragment" data-fragment-index="3">java simonis.Nested</span>
 <span class="fragment" data-fragment-index="4">Name:             simonis.Nested$NestedClass
 Package name:     simonis
@@ -739,9 +739,9 @@ public class Nested {
               <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
 $ <span class="fragment" data-fragment-index="1">javac simonis/Nested.java
 $ </span><span class="fragment" data-fragment-index="2">ll simonis/
--rw-rw-r-- 1 simonis simonis  182 Okt 13 10:02 <span class="fragment highlight-border" data-fragment-index="3">Nested$1.class</span>
--rw-rw-r-- 1 simonis simonis 1085 Okt 13 10:02 Nested.class
--rw-rw-r-- 1 simonis simonis  387 Okt 13 10:02 Nested$NestedClass.class
+-rw-rw-r- - 1 simonis simonis  182 Okt 13 10:02 <span class="fragment highlight-border" data-fragment-index="3">Nested$1.class</span>
+-rw-rw-r- - 1 simonis simonis 1085 Okt 13 10:02 Nested.class
+-rw-rw-r- - 1 simonis simonis  387 Okt 13 10:02 Nested$NestedClass.class
 $ </span><span class="fragment" data-fragment-index="4">java simonis.Nested</span>
 <span class="fragment" data-fragment-index="5">Name:             simonis.Nested$NestedClass
 Package name:     simonis
@@ -784,9 +784,9 @@ public class Nested {
               <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
 $ javac simonis/Nested.java
 $ <span class="fragment" data-fragment-index="1">ll simonis/
--rw-rw-r-- 1 simonis simonis  182 Okt 13 10:02 Nested$1.class
--rw-rw-r-- 1 simonis simonis 1085 Okt 13 10:02 Nested.class
--rw-rw-r-- 1 simonis simonis  387 Okt 13 10:02 Nested$NestedClass.class
+-rw-rw-r- - 1 simonis simonis  182 Okt 13 10:02 Nested$1.class
+-rw-rw-r- - 1 simonis simonis 1085 Okt 13 10:02 Nested.class
+-rw-rw-r- - 1 simonis simonis  387 Okt 13 10:02 Nested$NestedClass.class
 $ </span><span class="fragment" data-fragment-index="2">java simonis.Nested     
 </span><span class="fragment" data-fragment-index="3">...
 Name:             simonis.Nested$1
@@ -811,8 +811,8 @@ Enclosing method: null
               <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
 $ java -jar ecj.jar simonis/Nested.java
 $ <span class="fragment" data-fragment-index="1">ll simonis/
--rw-rw-r-- 1 simonis simonis 1085 Okt 13 10:02 Nested.class
--rw-rw-r-- 1 simonis simonis  387 Okt 13 10:02 Nested$NestedClass.class
+-rw-rw-r- - 1 simonis simonis 1085 Okt 13 10:02 Nested.class
+-rw-rw-r- - 1 simonis simonis  387 Okt 13 10:02 Nested$NestedClass.class
 $ </span><span class="fragment" data-fragment-index="2">java simonis.Nested</span>
 <span class="fragment" data-fragment-index="3">Exception in thread "main" java.lang.ClassNotFoundException: simonis.Nested$1
 	at java.base/jdk.internal.loader.BuiltinClassLoader.loadClass()
@@ -881,7 +881,147 @@ class Nested$NestedClass {
               </div>
             </div>
           </section>
+-->
 
+          <section>
+
+            <h2>Static Nested Classes</h2>
+
+            <div style="width: 100%">
+              <div style="float: left; width: 46%">
+
+            <pre class="big noshadow" style="height:100%; margin: 0; display: block" data-trim="true">
+              <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+public class TopLevel {
+  static class Nested {
+    public Nested() {}
+  }
+  public static void main(...) {
+    Nested nc = new Nested();
+  }
+}
+              </code>
+            </pre>
+
+            <pre class="big noshadow" style="height:100%; margin: 0; display: block" data-trim="true">
+              <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
+$ <span class="fragment" data-fragment-index="1">javac simonis/TopLevel.java</span>
+<span class="fragment" data-fragment-index="2">TopLevel.class                  
+TopLevel$NestedClass.class</span>
+
+
+
+
+<span/>
+              </code>
+            </pre>
+
+              </div>
+              <div style="position:relative; float: right; width: 54%">
+
+            <pre class="big noshadow" style="height:100%; margin: 0; display: block" data-trim="true">
+              <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+<span class="fragment" data-fragment-index="3">public class TopLevel {
+  static class Nested {
+    <span class="fragment highlight-border" data-fragment-index="4">private</span> Nested() {}
+  }
+  public static void main(...) {         
+    Nested nc = new Nested();
+  }
+}</span>
+              </code>
+            </pre>
+
+            <pre class="big noshadow" style="height:100%; margin: 0; display: block;" data-trim="true">
+              <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
+$ <span class="fragment" data-fragment-index="5">javac simonis/TopLevel.java</span>
+<span class="fragment" data-fragment-index="7">TopLevel.class
+TopLevel$NestedClass.class
+<span class="fragment highlight-border" data-fragment-index="8">TopLevel$1.class</span>
+$ </span><span class="fragment" data-fragment-index="9">java -jar ecj.jar simonis/TopLevel.java</span>
+<span class="fragment" data-fragment-index="10">TopLevel.class
+TopLevel$NestedClass.class</span>
+              </code>
+            </pre>
+
+              </div>
+            </div>
+
+<div class="quiz fragment" data-fragment-index="6">
+  <!-- Quiz content -->
+  <div class="quiz-content">
+    <div class="quiz-header">
+      <h2>What if we make the constructor of class <code style='font-size: smaller;'>Nested</code> private ?</h2>
+    </div>
+    <div class="quiz-body">
+      <ol>
+        <li>Compile error</li>
+        <li>Two classes as before</li>
+        <li>Three classes</li>
+      </ol>
+    </div>
+    <div class="quiz-footer">
+      &nbsp;
+    </div>
+  </div>
+</div>
+
+          </section>
+
+          <section class="demo">
+
+            <div style="width: 100%">
+              <div style="float: left; width: 46%">
+
+                <h3><code>JAVAC</code></h3>
+
+                <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+                  <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+$ javac simonis/TopLevel.java
+$ javap simonis.TopLevel$Nested
+...
+Compiled from "TopLevel.java"
+class TopLevel$Nested {
+  private TopLevel$Nested();
+    ...
+  <span class="fragment highlight-current-border" data-fragment-index="1">TopLevel$Nested(TopLevel$1);</span>
+   flags: (0x1000) <span class="fragment highlight-current-border" data-fragment-index="2">ACC_SYNTHETIC</span>
+   Code:
+    0: aload_0
+    1: invokespecial #1// "&lt;init&gt;"
+    4: return
+}
+                  </code>
+                </pre>
+
+              </div>
+              <div style="position:relative; float: right; width: 54%">
+
+                <h3><code>ECJ</code></h3>
+
+                <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+                  <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+$ java -jar ecj.jar simonis/TopLevel.java
+$ javap simonis.TopLevel$Nested
+...
+Compiled from "TopLevel.java"
+class TopLevel$Nested {
+  private TopLevel$Nested();
+    ...
+  <span class="fragment highlight-current-border" data-fragment-index="1">TopLevel$Nested(TopLevel$Nested);</span>
+   flags: (0x1000) <span class="fragment highlight-current-border" data-fragment-index="2">ACC_SYNTHETIC</span>
+   Code:
+    0: aload_0
+    1: invokespecial #12// "&lt;init&gt;"
+    4: return
+}
+                  </code>
+                </pre>
+
+              </div>
+            </div>
+          </section>
+<!--
           <section>
 
             <h2>Inner classes</h2>
@@ -909,8 +1049,8 @@ public class Inner {
               <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
 $ <span class="fragment" data-fragment-index="1">javac simonis/Inner.java
 $ </span><span class="fragment" data-fragment-index="2">ll simonis/
--rw-rw-r-- 1 simonis simonis  519 Okt 13 18:15 Inner.class
--rw-rw-r-- 1 simonis simonis  337 Okt 13 18:15 Inner$InnerClass.class
+-rw-rw-r- - 1 simonis simonis  519 Okt 13 18:15 Inner.class
+-rw-rw-r- - 1 simonis simonis  337 Okt 13 18:15 Inner$InnerClass.class
 $ </span><span class="fragment" data-fragment-index="3">java simonis.Inner</span>
 <span class="fragment" data-fragment-index="4">Name:             simonis.Inner$InnerClass
 Package name:     simonis
@@ -951,7 +1091,53 @@ class simonis.Inner$InnerClass {
               </code>
             </pre>
           </section>
+-->
 
+          <section>
+
+            <h2>Inner classes</h2>
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+public class TopLevel {
+  class Inner {
+    public Inner() {}
+  }
+  public static void main(String... args) {
+    Inner ic = <span class="fragment highlight-current-border">new TopLevel() . new Inner()</span>;
+  }
+}
+              </code>
+            </pre>
+          </section>
+
+          <section class="demo">
+
+            <h2>Inner classes</h2>
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+$ javap -v simonis.TopLevel$Inner
+...
+Compiled from "TopLevel.java"
+class simonis.TopLevel$Inner {
+  <span class="fragment highlight-current-border">final simonis.TopLevel this$0;</span>
+    flags: (0x1010) ACC_FINAL, <span class="fragment highlight-current-border">ACC_SYNTHETIC</span>
+  public <span class="fragment highlight-current-border">simonis.TopLevel$Inner(simonis.TopLevel)</span>;
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+         0: aload_0
+         1: aload_1
+         2: <span class="fragment highlight-current-border">putfield      #1 // Field this$0:Lsimonis/TopLevel</span>;
+         5: aload_0
+         6: invokespecial #2 // Method java/lang/Object."&lt;init&gt;":()V
+         9: return
+}
+              </code>
+            </pre>
+          </section>
+
+<!--
           <section>
 
             <h2>Anonymous classes</h2>
@@ -979,8 +1165,8 @@ public class Anonymous {
               <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
 $ <span class="fragment" data-fragment-index="1">javac simonis/Anonymous.java
 $ </span><span class="fragment" data-fragment-index="2">ll simonis/
--rw-rw-r-- 1 simonis simonis  392 Okt 13 17:39 <span class="fragment highlight-current-border" data-fragment-index="3">Anonymous$1.class</span>
--rw-rw-r-- 1 simonis simonis  471 Okt 13 17:39 Anonymous.class
+-rw-rw-r- - 1 simonis simonis  392 Okt 13 17:39 <span class="fragment highlight-current-border" data-fragment-index="3">Anonymous$1.class</span>
+-rw-rw-r- - 1 simonis simonis  471 Okt 13 17:39 Anonymous.class
 $ </span><span class="fragment" data-fragment-index="4">java simonis.Anonymous</span>
 <span class="fragment" data-fragment-index="5">Name:             simonis.Anonymous$1
 Package name:     simonis
@@ -1023,8 +1209,8 @@ public class Local {
               <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
 $ <span class="fragment" data-fragment-index="1">javac simonis/Local.java
 $ </span><span class="fragment" data-fragment-index="2">ll simonis/
--rw-rw-r-- 1 simonis simonis  332 Okt 13 18:44 <span class="fragment highlight-current-border" data-fragment-index="3">Local$1LocalClass.class</span>
--rw-rw-r-- 1 simonis simonis  482 Okt 13 18:44 Local.class
+-rw-rw-r- - 1 simonis simonis  332 Okt 13 18:44 <span class="fragment highlight-current-border" data-fragment-index="3">Local$1LocalClass.class</span>
+-rw-rw-r- - 1 simonis simonis  482 Okt 13 18:44 Local.class
 $ </span><span class="fragment" data-fragment-index="4">java simonis.Local</span>
 <span class="fragment" data-fragment-index="5">Name:             simonis.Local$1LocalClass
 Package name:     simonis
@@ -1037,6 +1223,68 @@ Enclosing class:  class simonis.Local
 Enclosing method: <span class="fragment highlight-current-border" data-fragment-index="8">public static void simonis.Local.main(String[])</span></span>
               </code>
             </pre>
+          </section>
+-->
+
+
+          <section>
+
+            <h2>Static Nested Classes</h2>
+
+            <div style="width: 100%">
+              <div style="float: left; width: 46%">
+
+            <pre class="big noshadow" style="height:100%; margin: 0; display: block" data-trim="true">
+              <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+public class TopLevel {
+
+  public static void main(...) {
+    Runnable r = new Runnable() {
+      public void run() {}
+    };
+  }
+}
+
+<span/>
+              </code>
+            </pre>
+
+            <pre class="big noshadow" style="height:100%; margin: 0; display: block" data-trim="true">
+              <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
+$ <span class="fragment" data-fragment-index="1">javac simonis/TopLevel.java</span>
+<span class="fragment" data-fragment-index="2">TopLevel.class                  
+TopLevel$1.class</span>
+              </code>
+            </pre>
+
+              </div>
+              <div style="position:relative; float: right; width: 54%">
+
+            <pre class="big noshadow" style="height:100%; margin: 0; display: block" data-trim="true">
+              <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+public class TopLevel {
+
+  public static void main(...) {
+    class Local {
+      Local() {}
+    }
+    Local l = new Local();
+  }
+}
+              </code>
+            </pre>
+
+            <pre class="big noshadow" style="height:100%; margin: 0; display: block;" data-trim="true">
+              <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
+$ <span class="fragment" data-fragment-index="3">javac simonis/TopLevel.java</span>
+<span class="fragment" data-fragment-index="4">TopLevel.class
+TopLevel$1Local.class</span>
+              </code>
+            </pre>
+
+              </div>
+            </div>
+
           </section>
 
         </section>
@@ -1305,9 +1553,9 @@ public class TwoLoaders {
             <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
               <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
 $ java simonis.TwoLoaders
-<span class="fragment" data-fragment-index="1">true
-false
-Exception in thread "main"
+<span class="fragment" data-fragment-index="1">true                           // class names equality
+false                          // instanceof
+Exception in thread "main"     // assignment
   java.lang.ClassCastException:
     <span class="fragment highlight-current-border" data-fragment-index="2">simonis.TwoLoaders cannot be cast to simonis.TwoLoaders</span>
 	at simonis.TwoLoaders.main(TwoLoaders.java:14)
@@ -1921,7 +2169,7 @@ $ java <span class="fragment highlight-current-border" data-fragment-index="1">-
               <li>Can't simply unload/reload on request:
                 <ul>
                   <li><a href="http://docs.oracle.com/javase/specs/jvms/se9/html/jvms-5.html#jvms-5.3">JVMS §5.3</a>:
-                    "<em>Given the same name, <br/>a good class loader should always return the same Class object</em>"</li>
+                    "<em>Given the same name, a good class loader <br/>should always return the same Class object</em>"</li>
                   <li>Static initializers</li>
                 </ul>
               </li>
