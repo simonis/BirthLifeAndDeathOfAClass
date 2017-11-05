@@ -1229,7 +1229,7 @@ Enclosing method: <span class="fragment highlight-current-border" data-fragment-
 
           <section>
 
-            <h2>Static Nested Classes</h2>
+            <h2>Anonymous and Local Classes</h2>
 
             <div style="width: 100%">
               <div style="float: left; width: 46%">
@@ -1303,7 +1303,7 @@ public class VmAnonymous {
     Runnable r = () -> {
       new Exception("Hello World!") . printStackTrace();
     };
-    TopLevel.printClassAttrs(r.getClass());
+    System.out.println(r.getClass().getName());
     r.run();
   }
 }
@@ -1313,46 +1313,25 @@ public class VmAnonymous {
 
           <section class="demo">
 
-            <h2>VM-Anonymous classes</h2>
-
             <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
               <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
 $ <span class="fragment" data-fragment-index="1">javac simonis/VmAnonymous.java
 $ </span><span class="fragment" data-fragment-index="2">ll simonis/
 -rw-rw-r-- 1 simonis simonis 1672 Okt 13 19:27 VmAnonymous.class
 $ </span><span class="fragment" data-fragment-index="4">java simonis.VmAnonymous</span>
-<span class="fragment" data-fragment-index="5">Name:             <span class="fragment highlight-current-border" data-fragment-index="6">simonis.VmAnonymous$$Lambda$1/88579647</span>
-Package name:     simonis
-Member:           false
-Local:            false
-Anonymous:        <span class="fragment highlight-current-border" data-fragment-index="7">false</span>
-Synthetic:        <span class="fragment highlight-current-border" data-fragment-index="8">true</span>
-Declaring class:  null
-Enclosing class:  null
-Enclosing method: null
-...
-</span>
-              </code>
-            </pre>
-          </section>
-
-          <section class="demo">
-
-            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
-              <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
-...
-<span class="fragment">java.lang.Exception: Hello World!
+<span class="fragment" data-fragment-index="5"><span class="fragment highlight-current-border" data-fragment-index="6">simonis.VmAnonymous$$Lambda$1/88579647</span></span>
+<span class="fragment" data-fragment-index="7">java.lang.Exception: Hello World!
 	at simonis.VmAnonymous.lambda$0(VmAnonymous.java:9)
 	at simonis.VmAnonymous.main(VmAnonymous.java:12)
-$ </span><span class="fragment">java -XX:+UnlockDiagnosticVMOptions <span class="fragment highlight-current-border">-XX:+ShowHiddenFrames</span> simonis.VmAnonymous</span>
-<span class="fragment">...
+$ </span><span class="fragment" data-fragment-index="8">java -XX:+UnlockDiagnosticVMOptions <span class="fragment highlight-current-border" data-fragment-index="9">-XX:+ShowHiddenFrames</span> simonis.VmAnonymous</span>
+<span class="fragment" data-fragment-index="10">simonis.VmAnonymous$$Lambda$1/88579647
 java.lang.Exception: Hello World!
 	at simonis.VmAnonymous.lambda$0(VmAnonymous.java:9)
-	at <span class="fragment highlight-current-border">simonis.VmAnonymous$$Lambda$1/88579647.run(&lt;Unknown&gt;:1000000)</span>
+	at <span class="fragment highlight-current-border" data-fragment-index="11">simonis.VmAnonymous$$Lambda$1/88579647.run(&lt;Unknown&gt;:1000000)</span>
 	at simonis.VmAnonymous.main(VmAnonymous.java:12)
-$ </span><span class="fragment">java <span class="fragment highlight-current-border">-Djdk.internal.lambda.dumpProxyClasses=/tmp</span> simonis.VmAnonymous</span>
-<span class="fragment">...
-$ </span><span class="fragment">ls -l /tmp/*.class</span>
+$ </span><span class="fragment" data-fragment-index="12">java <span class="fragment highlight-current-border" data-fragment-index="13">-Djdk.internal.lambda.dumpProxyClasses=/tmp</span> simonis.VmAnonymous</span>
+<span class="fragment" data-fragment-index="14">...
+$ </span><span class="fragment" data-fragment-index="15">ls -l /tmp/*.class</span>
 <span class="fragment">...
 -rw-rw-r-- 1 simonis simonis 336 Okt 13 19:43 VmAnonymous$$Lambda$1.class</span>
               </code>
