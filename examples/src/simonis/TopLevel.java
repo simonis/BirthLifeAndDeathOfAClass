@@ -1,7 +1,13 @@
 package simonis;
 
 public class TopLevel {
+  static class Nested {
+    private Nested() {}
+  }
+
   public static void main(String... args) {
+    Nested nc = new Nested();
+    printClassAttrs(nc.getClass());
     TopLevel tl = new TopLevel();
     printClassAttrs(tl.getClass());
   }

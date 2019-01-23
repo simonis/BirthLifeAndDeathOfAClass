@@ -5,7 +5,10 @@ public class Nested {
     public NestedClass() {}
   }
   static class PrivateNestedClass {
-    private PrivateNestedClass() {} // Not accessible!
+    public int i;
+    private PrivateNestedClass() { i = 1;} // Not accessible!
+    private PrivateNestedClass(PrivateNestedClass pnc) { i = 2; } // Not accessible!
+    //PrivateNestedClass(PrivateNestedClass pnc, PrivateNestedClass pnc2) { i = 3; } // Not accessible!
   }
   public static void main(String... args) {
     NestedClass nc = new NestedClass();
@@ -17,5 +20,8 @@ public class Nested {
     catch (Exception e) {
       System.out.println("Compiled by ECJ");
     }
+    System.out.println(pnc.i);
+    pnc = new PrivateNestedClass(pnc);
+    System.out.println(pnc.i);
   }
 }

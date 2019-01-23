@@ -47,6 +47,11 @@ code.terminal .hljs-title {
     color: #00ff00;
 }
 
+/* Used for styling command lines in a 'java' code block */
+code.java .hljs-title-terminal {
+    color: #00ff00;
+}
+
 .reveal pre.noshadow {
     border-radius: 0;
     box-shadow: unset;
@@ -140,42 +145,42 @@ mark.border-no-bottom {
   opacity: 1;
   visibility: visible;
   /* Define a transparent border with the same size for inactive fragments such that we have no size changes when the fragments get displayed */
-  border-width: 5px 5px 5px 5px;
+  border-width: 3px 3px 3px 3px;
   border-style: solid;
   border-color: transparent;
   /* Use a negative margin with the same size as the border to avoid size changes of elemnts with borders or when the border is set dynamically by fragments */
-  margin: -5px;
+  margin: -3px;
 }
 .reveal .slides section .fragment.highlight-border.visible {
-  border: 5px solid #1B91FF;
+  border: 3px solid #1B91FF;
   border-radius: 10px;
-  margin: 5px -5px 5px -5px;
+  margin: 3px -3px 3px -3px;
 }
 .reveal .slides section .fragment.highlight-current-border.current-fragment {
-  border: 5px solid #1B91FF;
+  border: 3px solid #1B91FF;
   border-radius: 10px;
-  margin: -5px;
+  margin: -3px;
 }
 .reveal .slides section .fragment.highlight-current-border.border-no-top.current-fragment {
   border-style: solid;
   border-color: transparent #1B91FF #1B91FF #1B91FF;
-  border-width: 5px;
+  border-width: 3px;
   border-radius: 0px 0px 10px 10px;
-  margin: -5px;
+  margin: -3px;
 }
 .reveal .slides section .fragment.highlight-current-border.border-no-bottom.current-fragment {
   border-style: solid;
   border-color: #1B91FF #1B91FF transparent #1B91FF;
-  border-width: 5px;
+  border-width: 3px;
   border-radius: 10px 10px 0px 0px;
-  margin: -5px;
+  margin: -3px;
 }
 .reveal .slides section .fragment.highlight-current-border.border-no-bottom-top.current-fragment {
   border-style: solid;
   border-color: transparent #1B91FF transparent #1B91FF;
-  border-width: 5px;
+  border-width: 3px;
   border-radius: 0px 0px 0px 0px;
-  margin: -5px;
+  margin: -3px;
 }
 
 
@@ -907,7 +912,7 @@ public class TopLevel {
               <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
 $ <span class="fragment" data-fragment-index="1">javac simonis/TopLevel.java</span>
 <span class="fragment" data-fragment-index="2">TopLevel.class                  
-TopLevel$NestedClass.class</span>
+TopLevel$Nested.class</span>
 
 
 
@@ -936,11 +941,11 @@ TopLevel$NestedClass.class</span>
               <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
 $ <span class="fragment" data-fragment-index="5">javac simonis/TopLevel.java</span>
 <span class="fragment" data-fragment-index="7">TopLevel.class
-TopLevel$NestedClass.class
+TopLevel$Nested.class
 <span class="fragment highlight-border" data-fragment-index="8">TopLevel$1.class</span>
 $ </span><span class="fragment" data-fragment-index="9">java -jar ecj.jar simonis/TopLevel.java</span>
 <span class="fragment" data-fragment-index="10">TopLevel.class
-TopLevel$NestedClass.class</span>
+TopLevel$Nested.class</span>
               </code>
             </pre>
 
@@ -977,18 +982,20 @@ TopLevel$NestedClass.class</span>
 
                 <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
                   <code class="java" data-trim="true" data-noescape="true" style="height:100%">
-$ javac simonis/TopLevel.java
-$ javap simonis.TopLevel$Nested
+<span class="hljs-keyword">$</span> <span class="fragment highlight-current-border hljs-title-terminal" data-fragment-index="0">javac simonis/TopLevel.java</span>
+<span class="hljs-keyword">$</span> <span class="hljs-title-terminal">javap simonis.TopLevel$Nested</span>
 ...
 Compiled from "TopLevel.java"
 class TopLevel$Nested {
-  private TopLevel$Nested();
+  <span class="fragment highlight-current-border" data-fragment-index="1">private TopLevel$Nested();</span>
+   flags: (0x0002) ACC_PRIVATE
+   Code:
     ...
-  <span class="fragment highlight-current-border" data-fragment-index="1">TopLevel$Nested(TopLevel$1);</span>
-   flags: (0x1000) <span class="fragment highlight-current-border" data-fragment-index="2">ACC_SYNTHETIC</span>
+  <span class="fragment highlight-current-border" data-fragment-index="2">TopLevel$Nested(TopLevel$1);</span>
+   flags: (0x1000) <span class="fragment highlight-current-border" data-fragment-index="3">ACC_SYNTHETIC</span>
    Code:
     0: aload_0
-    1: invokespecial #1// "&lt;init&gt;"
+    1: <span class="fragment highlight-current-border" data-fragment-index="4">invokespecial #1</span>// "&lt;init&gt;"
     4: return
 }
                   </code>
@@ -1001,18 +1008,20 @@ class TopLevel$Nested {
 
                 <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
                   <code class="java" data-trim="true" data-noescape="true" style="height:100%">
-$ java -jar ecj.jar simonis/TopLevel.java
-$ javap simonis.TopLevel$Nested
+<span class="hljs-keyword">$</span> <span class="fragment highlight-current-border hljs-title-terminal" data-fragment-index="0">java -jar ecj.jar simonis/TopLevel.java</span>
+<span class="hljs-keyword">$</span>  <span class="hljs-title-terminal">javap -c -p simonis.TopLevel$Nested</span>
 ...
 Compiled from "TopLevel.java"
 class TopLevel$Nested {
-  private TopLevel$Nested();
+  <span class="fragment highlight-current-border" data-fragment-index="1">private TopLevel$Nested();</span>
+   flags: (0x0002) ACC_PRIVATE
+   Code:
     ...
-  <span class="fragment highlight-current-border" data-fragment-index="1">TopLevel$Nested(TopLevel$Nested);</span>
-   flags: (0x1000) <span class="fragment highlight-current-border" data-fragment-index="2">ACC_SYNTHETIC</span>
+  <span class="fragment highlight-current-border" data-fragment-index="2">TopLevel$Nested(TopLevel$Nested);</span>
+   flags: (0x1000) <span class="fragment highlight-current-border" data-fragment-index="3">ACC_SYNTHETIC</span>
    Code:
     0: aload_0
-    1: invokespecial #12// "&lt;init&gt;"
+    1: <span class="fragment highlight-current-border" data-fragment-index="4">invokespecial #12</span>// "&lt;init&gt;"
     4: return
 }
                   </code>
@@ -1021,6 +1030,69 @@ class TopLevel$Nested {
               </div>
             </div>
           </section>
+
+
+          <section>
+
+            <h2><a href="https://openjdk.java.net/jeps/181">JEP 181: Nest-Based Access Control</a></h2>
+
+            <pre class="big noshadow" style="height:100%; margin: 0; display: block" data-trim="true">
+              <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
+$ <span class="fragment" data-fragment-index="1">jdk11/bin/javac simonis/TopLevel.java</span>
+<span class="fragment" data-fragment-index="2">TopLevel.class                  
+TopLevel$Nested.class</span>
+              </code>
+            </pre>
+
+            <div style="width: 100%">
+              <div style="float: left; width: 50%">
+
+                <pre class="big noshadow" style="height:100%; margin: 0; display: block" data-trim="true">
+                  <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+<span class="hljs-keyword">$</span> <span class="fragment hljs-title-terminal" data-fragment-index="3">javap simonis.TopLevel</span>
+<span class="fragment" data-fragment-index="4">...
+Compiled from "TopLevel.java"
+public class simonis.TopLevel
+ ...
+ public static void main(...);
+  // class TopLevel$Nested
+  0: new           #13
+  3: dup
+  <span class="fragment highlight-current-border border-no-bottom" data-fragment-index="5">// method TopLevel$Nested.&lt;init&gt;()V</span>
+  <span class="fragment highlight-current-border border-no-top   " data-fragment-index="5">4: invokespecial #15               </span>
+
+<span class="fragment" data-fragment-index="6"><span class="fragment highlight-border" data-fragment-index="7">NestMembers</span>:
+ <span class="fragment highlight-border" data-fragment-index="8">class simonis/TopLevel$Nested</span></span></span>
+                  </code>
+                </pre>
+
+              </div>
+              <div style="position:relative; float: right; width: 50%">
+
+                <pre class="big noshadow" style="height:100%; margin: 0; display: block" data-trim="true">
+                  <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+<span class="hljs-keyword">$</span> <span class="fragment hljs-title-terminal" data-fragment-index="9">javap simonis.TopLevel$Nested</span>
+<span class="fragment" data-fragment-index="10">...
+Compiled from "TopLevel.java"
+class simonis.TopLevel$Nested
+ ...
+ private simonis.TopLevel$Nested();
+  flags: (0x0002) <span class="fragment highlight-current-border" data-fragment-index="11">ACC_PRIVATE</span>
+  ...
+
+
+
+
+<span class="fragment" data-fragment-index="12"><span class="fragment highlight-border" data-fragment-index="13">NestHost:</span>
+ <span class="fragment highlight-border" data-fragment-index="14">class simonis/TopLevel</span></span>
+</span>
+                  </code>
+                </pre>
+
+              </div>
+            </div>
+          </section>
+
 <!--
           <section>
 
@@ -2499,7 +2571,7 @@ hljs.initHighlightingOnLoad(); } },
 
       function drawArrow(canvas, from, target, color) {
         var ctx = canvas.getContext("2d");
-        ctx.lineWidth = 5;
+        ctx.lineWidth = 3;
         ctx.strokeStyle= color;
         var x1, y1, x2, y2;
         if ((from.offsetTop + from.offsetHeight) < (target.offsetTop)) {
