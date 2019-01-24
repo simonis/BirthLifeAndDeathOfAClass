@@ -1,43 +1,46 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/PR-SVG-20010719/DTD/svg10.dtd">
-<svg width="69cm" height="39cm" viewBox="-181 -61 1362 762" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<svg width="69cm" height="37cm" viewBox="-181 -33 1362 739" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="-50" y="280">
     <tspan x="-50" y="280"></tspan>
   </text>
-  <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="-70" y="320">
-    <tspan x="-70" y="320"></tspan>
+  <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="-70" y="417.154">
+    <tspan x="-70" y="417.154"></tspan>
   </text>
   <g>
-    <g>
-      <rect style="fill: #ffffff" x="60" y="-60" width="880" height="760"/>
-      <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="60" y="-60" width="880" height="760"/>
-    </g>
-    <text font-size="18.0622" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="827.928" y="680">
-      <tspan x="827.928" y="680">Metaspace</tspan>
-    </text>
+    <rect style="fill: #ffffff" x="60" y="-31.6622" width="880" height="736.067"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="60" y="-31.6622" width="880" height="736.067"/>
   </g>
-  <g>
-    <rect style="fill: #ffffff" x="-180" y="-60" width="220" height="760"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="-180" y="-60" width="220" height="760"/>
-    <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="-70" y="323.9">
-      <tspan x="-70" y="323.9"></tspan>
-    </text>
-  </g>
-  <text font-size="18.0622" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="-81.5856" y="684.757">
-    <tspan x="-81.5856" y="684.757">Code Cache</tspan>
+  <text font-size="18.0622" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="829.03" y="689.372">
+    <tspan x="829.03" y="689.372">Metaspace</tspan>
   </text>
   <g>
-    <g>
-      <rect style="fill: #ffffff" x="960" y="-60" width="220" height="760"/>
-      <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="960" y="-60" width="220" height="760"/>
-    </g>
-    <text font-size="18.0622" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="1075.24" y="681.586">
-      <tspan x="1075.24" y="681.586">Java Heap</tspan>
+    <rect style="fill: #ffffff" x="-180" y="130" width="220" height="574.306"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="-180" y="130" width="220" height="574.306"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="-70" y="421.053">
+      <tspan x="-70" y="421.053"></tspan>
+    </text>
+  </g>
+  <text font-size="18.0622" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="-81.5856" y="691.922">
+    <tspan x="-81.5856" y="691.922">Code Cache</tspan>
+  </text>
+  <g>
+    <rect style="fill: #ffffff" x="960" y="-30" width="220" height="734.306"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="960" y="-30" width="220" height="734.306"/>
+  </g>
+  <text font-size="18.0622" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="1076.35" y="690.958">
+    <tspan x="1076.35" y="690.958">Java Heap</tspan>
+  </text>
+  <g>
+    <rect style="fill: #ffffff" x="-180" y="-30" width="220" height="146.389"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="-180" y="-30" width="220" height="146.389"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="-70" y="47.0944">
+      <tspan x="-70" y="47.0944"></tspan>
     </text>
   </g>
   <g>
-    <text font-size="18.0622" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="1000" y="0">
-      <tspan x="1000" y="0">Foo</tspan>
+    <text font-size="18.0622" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="1000" y="7.14376">
+      <tspan x="1000" y="7.14376">Foo</tspan>
     </text>
     <g>
       <g>
