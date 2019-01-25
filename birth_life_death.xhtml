@@ -1597,8 +1597,6 @@ public class TwoLoaders {
 
           <section class="demo">
 
-            <h2>Class Identity</h2>
-
             <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
               <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
 $ java simonis.TwoLoaders
@@ -1616,7 +1614,12 @@ $ </span><span class="fragment" data-fragment-index="3">sapjvm/bin/java simonis.
        <span class="fragment highlight-current-border" data-fragment-index="4">(loader java.net.URLClassLoader [id=8020,parents=&lt;bootstrap&gt;])</span> to
       class simonis.TwoLoaders
        <span class="fragment highlight-current-border" data-fragment-index="4">(loader System [class=sun.misc.Launcher$AppClassLoader,urls=file:/tmp/])</span>
-	at simonis.TwoLoaders.main(TwoLoaders.java:14)</span>
+	at simonis.TwoLoaders.main(TwoLoaders.java:14)
+$ </span><span class="fragment" data-fragment-index="5">jdk11/bin/java simonis.TwoLoaders
+...
+  simonis.TwoLoaders cannot be cast to simonis.TwoLoaders
+    (<span class="fragment highlight-current-border" data-fragment-index="6">simonis.TwoLoaders</span> is in <span class="fragment highlight-current-border" data-fragment-index="6">unnamed module of loader java.net.URLClassLoader</span>
+     <span class="fragment highlight-current-border" data-fragment-index="6">simonis.TwoLoaders</span> is in <span class="fragment highlight-current-border" data-fragment-index="6">unnamed module of loader 'app'</span>)</span>
               </code>
             </pre>
           </section>
@@ -1666,21 +1669,21 @@ public class CHA {
 
                 <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
                   <code class="java" data-trim="true" data-noescape="true" style="height:100%">
-<span/>
-  ...
+<span/>  ...
 
   public static void main (String[] args) {
 
-    A a = new A();
-    for (int i = 0; i &lt; 20_000; i++) {
-      g(a);  // JIT compile g()
-    }
+    <span class="fragment highlight-current-border                     " data-fragment-index="1">A a = new A();</span>
 
-    B b = new B();
+    <span class="fragment highlight-current-border border-no-bottom    " data-fragment-index="2">for (int i = 0; i &lt; 20_000; i++) {</span>
+    <span class="fragment highlight-current-border border-no-bottom-top" data-fragment-index="2">  g(a);  // JIT compile g()       </span>
+    <span class="fragment highlight-current-border border-no-top       " data-fragment-index="2">}                                 </span>
 
-    for (int i = 0; i &lt; 20_000; i++) {
-      g(a);
-    }
+    <span class="fragment highlight-current-border                     " data-fragment-index="3">B b = new B();</span>
+
+    <span class="fragment highlight-current-border border-no-bottom    " data-fragment-index="4">for (int i = 0; i &lt; 20_000; i++) {</span>
+    <span class="fragment highlight-current-border border-no-bottom-top" data-fragment-index="4">  g(a);                           </span>
+    <span class="fragment highlight-current-border border-no-top       " data-fragment-index="4">}                                 </span>
   }
 }
                   </code>
@@ -1739,8 +1742,8 @@ $ java ... <span class="fragment highlight-current-border border-no-bottom" data
 ...</span>
 <span class="fragment" data-fragment-index="4">Dependencies:
 <span class="fragment highlight-current-border" data-fragment-index="5">Dependency of type unique_concrete_method</span>
-  context = simonis.CHA$A
-  method  = {method} {0x00007fd6ac477868} 'f' '()V' in 'simonis/CHA$A'
+  <span class="fragment highlight-current-border" data-fragment-index="6">context = simonis.CHA$A</span>
+  <span class="fragment highlight-current-border" data-fragment-index="7">method  = {method} {0x00007fd6ac477868} 'f'</span> '()V' in 'simonis/CHA$A'
    [nmethod&lt;=klass]simonis.CHA$A
 ...</span>
               </code>
@@ -1910,6 +1913,64 @@ http://downloads.contentful.com/oxjq45e8ilak/2SP89wQio8Ye6EEuy2McyK/6407e07416de
 
           </section>
 
+          <section>
+
+            <h2>CHA - Class Hierarchy Analysis</h2>
+
+            <div style="width: 100%">
+              <div style="float: left; width: 40%">
+
+               <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+                  <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+package simonis;
+
+public class CHA2 {
+
+  static class A {
+    void f() {}
+  }
+
+  static class B extends A {
+    void f() {}
+  }
+
+  static void g(A a) {
+    a.f();
+  }
+
+  ...
+                  </code>
+                </pre>
+
+              </div>
+              <div style="position:relative; float: right; width: 60%">
+
+                <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+                  <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+<span/>
+  ...
+
+  public static void main (String[] args) {
+
+    A a = new A();
+    for (int i = 0; i &lt; 20_000; i++) {
+      g(a);  // JIT compile g()
+    }
+
+    <mark class="border">A b = new B()</mark>; // was B b = new B();
+
+    for (int i = 0; i &lt; 20_000; i++) {
+      g(a);
+    }
+  }
+}
+                  </code>
+                </pre>
+
+              </div>
+            </div>
+          </section>
+
         </section>
 
 
@@ -2030,15 +2091,15 @@ public class Instrument {
             <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
               <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
 $ java <span class="fragment highlight-current-border" data-fragment-index="1">-javaagent:InstAgent.jar=simonis</span> <span class="fragment highlight-current-border" data-fragment-index="1">-XX:+ShowHiddenFrames</span> simonis.Instrument
-<span class="fragment" data-fragment-index="2">=&gt; <span class="fragment highlight-current-border" data-fragment-index="3">transformimg simonis/Instrument</span>
--&gt; <span class="fragment highlight-current-border" data-fragment-index="4">simonis.Instrument::main([Ljava/lang/String;)V</span>
--&gt; <span class="fragment highlight-current-border" data-fragment-index="5">simonis.Instrument::lambda$0()V</span>
+<span class="fragment" data-fragment-index="2">  =&gt; <span class="fragment highlight-current-border" data-fragment-index="3">transformimg simonis/Instrument</span>
+0 -&gt; <span class="fragment highlight-current-border" data-fragment-index="4">simonis.Instrument::main([Ljava/lang/String;)V</span>
+0 -&gt; <span class="fragment highlight-current-border" data-fragment-index="5">simonis.Instrument::lambda$0()V</span>
 java.lang.Exception: Hello World!
 	at simonis.Instrument.lambda$0(Instrument.java:7)
 	at <span class="fragment highlight-current-border" data-fragment-index="8">simonis.Instrument$$Lambda$1/1556595366.run</span>(&lt;Unknown&gt;:1000000)
 	at simonis.Instrument.main(Instrument.java:9)
-&lt;- <span class="fragment highlight-current-border" data-fragment-index="6">simonis.Instrument::lambda$0()V</span>
-&lt;- <span class="fragment highlight-current-border" data-fragment-index="7">simonis.Instrument::main([Ljava/lang/String;)V</span></span>
+0 &lt;- <span class="fragment highlight-current-border" data-fragment-index="6">simonis.Instrument::lambda$0()V</span>
+0 &lt;- <span class="fragment highlight-current-border" data-fragment-index="7">simonis.Instrument::main([Ljava/lang/String;)V</span></span>
               </code>
             </pre>
           </section>
@@ -2075,15 +2136,16 @@ public class Instrument2 {
             <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
               <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
 $ java <span class="fragment highlight-current-border" data-fragment-index="1">-javaagent:InstAgent.jar='simonis/Instrument2$A'</span> simonis.Instrument2
-<span class="fragment" data-fragment-index="2">=&gt; <span class="fragment highlight-current-border" data-fragment-index="3">transformimg simonis/Instrument2$A</span>
+<span class="fragment" data-fragment-index="2">  =&gt; <span class="fragment highlight-current-border" data-fragment-index="3">transformimg simonis/Instrument2$A</span>
+0 -&gt; <span class="fragment highlight-current-border" data-fragment-index="5">simonis.Instrument2$A::lambda$0()V</span>
 ...
-=&gt; <span class="fragment highlight-current-border" data-fragment-index="4">re-transforming simonis/Instrument2$A</span>
-0&gt; <span class="fragment highlight-current-border" data-fragment-index="5">simonis.Instrument2$A::lambda$0()V</span>
-=&gt; <span class="fragment highlight-current-border" data-fragment-index="6">re-transforming simonis/Instrument2$A</span>
-1&gt; <span class="fragment highlight-current-border" data-fragment-index="7">simonis.Instrument2$A::lambda$0()V</span>
-=&gt; re-transforming simonis/Instrument2$A
+  =&gt; <span class="fragment highlight-current-border" data-fragment-index="4">re-transforming simonis/Instrument2$A</span>
+1 -&gt; <span class="fragment highlight-current-border" data-fragment-index="5">simonis.Instrument2$A::lambda$0()V</span>
+  =&gt; <span class="fragment highlight-current-border" data-fragment-index="6">re-transforming simonis/Instrument2$A</span>
+2 -&gt; <span class="fragment highlight-current-border" data-fragment-index="7">simonis.Instrument2$A::lambda$0()V</span>
+  =&gt; re-transforming simonis/Instrument2$A
 ...
-9&gt; <span class="fragment highlight-current-border" data-fragment-index="8">simonis.Instrument2$A::lambda$0()V</span></span>
+9 -&gt; <span class="fragment highlight-current-border" data-fragment-index="8">simonis.Instrument2$A::lambda$0()V</span></span>
 
 <span class="fragment" data-fragment-index="10">$ <span class="fragment highlight-current-border" data-fragment-index="11">jcmd &lt;pid&gt; GC.class_stats</span> InstBytes,KlassBytes,MethodCount,Bytecodes</span>
 <span class="fragment" data-fragment-index="12">Index InstBytes KlassBytes Bytecodes ClassName
@@ -2131,85 +2193,72 @@ $ java <span class="fragment highlight-current-border" data-fragment-index="1">-
 
         <section class="demo">
 
-          <section class="demo">
+          <section>
 
             <h2>Class representation in the HotSpot VM</h2>
 
-            <div width="100%" style="position: relative; margin: 0 0 0 0px;">
-              <div class="" style="position: static; width: 100%">
-                <object data="images/CodeCacheMetaspaceHeap_1.svg" type="image/svg+xml"
-                        style="width: 90%;">&nbsp;</object>
-              </div>
-              <div class="fragment" data-fragment-index="1" style="position: absolute; left: 0; top: 0; width: 100%">
-                <object data="images/CodeCacheMetaspaceHeap_2.svg" type="image/svg+xml"
-                        style="width: 90%;">&nbsp;</object>
-              </div>
-              <div class="fragment" data-fragment-index="2" style="position: absolute; left: 0; top: 0; width: 100%">
-                <object data="images/CodeCacheMetaspaceHeap_3.svg" type="image/svg+xml"
-                        style="width: 90%;">&nbsp;</object>
-              </div>
-              <div class="fragment" data-fragment-index="3" style="position: absolute; left: 0; top: 0; width: 100%">
-                <object data="images/CodeCacheMetaspaceHeap_4.svg" type="image/svg+xml"
-                        style="width: 90%;">&nbsp;</object>
-              </div>
-              <div class="fragment" data-fragment-index="4" style="position: absolute; left: 0; top: 0; width: 100%">
-                <object data="images/CodeCacheMetaspaceHeap_5.svg" type="image/svg+xml"
-                        style="width: 90%;">&nbsp;</object>
-              </div>
-              <div class="fragment" data-fragment-index="5" style="position: absolute; left: 0; top: 0; width: 100%">
-                <object data="images/CodeCacheMetaspaceHeap_6.svg" type="image/svg+xml"
-                        style="width: 90%;">&nbsp;</object>
-              </div>
-              <div class="fragment" data-fragment-index="6" style="position: absolute; left: 0; top: 0; width: 100%">
-                <object data="images/CodeCacheMetaspaceHeap_7.svg" type="image/svg+xml"
-                        style="width: 90%;">&nbsp;</object>
-              </div>
-              <div class="fragment" data-fragment-index="7" style="position: absolute; left: 0; top: 0; width: 100%">
-                <object data="images/CodeCacheMetaspaceHeap_8.svg" type="image/svg+xml"
-                        style="width: 90%;">&nbsp;</object>
-              </div>
-              <div class="fragment" data-fragment-index="8" style="position: absolute; left: 0; top: 0; width: 100%">
-                <object data="images/CodeCacheMetaspaceHeap_9.svg" type="image/svg+xml"
-                        style="width: 90%;">&nbsp;</object>
-              </div>
-              <div class="fragment" data-fragment-index="9" style="position: absolute; left: 0; top: 0; width: 100%">
-                <object data="images/CodeCacheMetaspaceHeap_10.svg" type="image/svg+xml"
-                        style="width: 90%;">&nbsp;</object>
-              </div>
-              <div class="fragment" data-fragment-index="10" style="position: absolute; left: 0; top: 0; width: 100%">
-                <object data="images/CodeCacheMetaspaceHeap_11.svg" type="image/svg+xml"
-                        style="width: 90%;">&nbsp;</object>
-              </div>
-              <div class="fragment" data-fragment-index="11" style="position: absolute; left: 0; top: 0; width: 100%">
-                <object data="images/CodeCacheMetaspaceHeap_12.svg" type="image/svg+xml"
-                        style="width: 90%;">&nbsp;</object>
-              </div>
-              <div class="fragment" data-fragment-index="12" style="position: absolute; left: 0; top: 0; width: 100%">
-                <object data="images/CodeCacheMetaspaceHeap_13.svg" type="image/svg+xml"
-                        style="width: 90%;">&nbsp;</object>
-              </div>
-              <div class="fragment" data-fragment-index="13" style="position: absolute; left: 0; top: 0; width: 100%">
-                <object data="images/CodeCacheMetaspaceHeap_14.svg" type="image/svg+xml"
-                        style="width: 90%;">&nbsp;</object>
-              </div>
-              <div class="fragment" data-fragment-index="14" style="position: absolute; left: 0; top: 0; width: 100%">
-                <object data="images/CodeCacheMetaspaceHeap_15.svg" type="image/svg+xml"
-                        style="width: 90%;">&nbsp;</object>
-              </div>
-              <div class="fragment" data-fragment-index="15" style="position: absolute; left: 0; top: 0; width: 100%">
-                <object data="images/CodeCacheMetaspaceHeap_16.svg" type="image/svg+xml"
-                        style="width: 90%;">&nbsp;</object>
-              </div>
-              <div class="fragment" data-fragment-index="16" style="position: absolute; left: 0; top: 0; width: 100%">
-                <object data="images/CodeCacheMetaspaceHeap_17.svg" type="image/svg+xml"
-                        style="width: 90%;">&nbsp;</object>
-              </div>
-              <div class="fragment" data-fragment-index="17" style="position: absolute; left: 0; top: 0; width: 100%">
-                <object data="images/CodeCacheMetaspaceHeap_18.svg" type="image/svg+xml"
-                        style="width: 90%;">&nbsp;</object>
-              </div>
-
-            </div>
+<!--
+                <div width="100%" style="position: relative; margin: 0 0 0 0px;">
+                  <div class="" style="position: static;">
+                    <object data="images/class.svg" type="image/svg+xml"
+                            style="width: 100%;">&nbsp;</object>
+                  </div>
+                  <div class="fragment" data-fragment-index="1" style="position: absolute; left: 0; top: 0; width: 100%">
+                    <object data="images/class.svg" type="image/svg+xml"
+                            style="width: 100%;">&nbsp;</object>
+                  </div>
+                  <div class="fragment" data-fragment-index="2" style="position: absolute; left: 0; top: 0; width: 100%">
+                    <object data="images/class.svg" type="image/svg+xml"
+                            style="width: 100%;">&nbsp;</object>
+                  </div>
+                </div>
+-->
+                <div width="100%" style="position: relative; margin: 0 0 0 0px;">
+                  <div class="" style="position: static;">
+                    <object data="images/CodeCacheMetaspaceHeap_1.svg" type="image/svg+xml"
+                            style="width: 90%;">&nbsp;</object>
+                  </div>
+                  <div class="fragment" data-fragment-index="1" style="position: absolute; left: 0; top: 0; width: 100%">
+                    <object data="images/CodeCacheMetaspaceHeap_2.svg" type="image/svg+xml"
+                            style="width: 90%;">&nbsp;</object>
+                  </div>
+                  <div class="fragment" data-fragment-index="2" style="position: absolute; left: 0; top: 0; width: 100%">
+                    <object data="images/CodeCacheMetaspaceHeap_3.svg" type="image/svg+xml"
+                            style="width: 90%;">&nbsp;</object>
+                  </div>
+                  <div class="fragment" data-fragment-index="3" style="position: absolute; left: 0; top: 0; width: 100%">
+                    <object data="images/CodeCacheMetaspaceHeap_4.svg" type="image/svg+xml"
+                            style="width: 90%;">&nbsp;</object>
+                  </div>
+                  <div class="fragment" data-fragment-index="4" style="position: absolute; left: 0; top: 0; width: 100%">
+                    <object data="images/CodeCacheMetaspaceHeap_5.svg" type="image/svg+xml"
+                            style="width: 90%;">&nbsp;</object>
+                  </div>
+                  <div class="fragment" data-fragment-index="5" style="position: absolute; left: 0; top: 0; width: 100%">
+                    <object data="images/CodeCacheMetaspaceHeap_6.svg" type="image/svg+xml"
+                            style="width: 90%;">&nbsp;</object>
+                  </div>
+                  <div class="fragment" data-fragment-index="6" style="position: absolute; left: 0; top: 0; width: 100%">
+                    <object data="images/CodeCacheMetaspaceHeap_7.svg" type="image/svg+xml"
+                            style="width: 90%;">&nbsp;</object>
+                  </div>
+                  <div class="fragment" data-fragment-index="7" style="position: absolute; left: 0; top: 0; width: 100%">
+                    <object data="images/CodeCacheMetaspaceHeap_8.svg" type="image/svg+xml"
+                            style="width: 90%;">&nbsp;</object>
+                  </div>
+                  <div class="fragment" data-fragment-index="8" style="position: absolute; left: 0; top: 0; width: 100%">
+                    <object data="images/CodeCacheMetaspaceHeap_9.svg" type="image/svg+xml"
+                            style="width: 90%;">&nbsp;</object>
+                  </div>
+                  <div class="fragment" data-fragment-index="9" style="position: absolute; left: 0; top: 0; width: 100%">
+                    <object data="images/CodeCacheMetaspaceHeap_10.svg" type="image/svg+xml"
+                            style="width: 90%;">&nbsp;</object>
+                  </div>
+                  <div class="fragment" data-fragment-index="10" style="position: absolute; left: 0; top: 0; width: 100%">
+                    <object data="images/CodeCacheMetaspaceHeap_11.svg" type="image/svg+xml"
+                            style="width: 90%;">&nbsp;</object>
+                  </div>
+                </div>
           </section>
 
         </section>
