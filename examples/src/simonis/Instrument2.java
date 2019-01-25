@@ -19,6 +19,7 @@ public class Instrument2 {
     Runnable r = A.getRunnable();
     for (int i = 0; i < 10; i++) {
       InstAgent.getInst().retransformClasses(Instrument2.A.class);
+      //Runnable r = A.getRunnable();
       new Thread(r).start();
     }
     System.out.println(
@@ -28,7 +29,9 @@ public class Instrument2 {
           .filter(n -> n.equals("simonis.Instrument2$A"))
           .count());
     System.in.read();
-    stop.countDown();
     System.gc();
+    System.in.read();
+    stop.countDown();
+    System.in.read();
   }
 }
