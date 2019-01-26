@@ -1,0 +1,2 @@
+jcmd 17187 GC.class_stats InstBytes,KlassBytes,MethodCount,Bytecodes | grep simonis
+jps

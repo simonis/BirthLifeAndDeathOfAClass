@@ -2,6 +2,7 @@ package simonis;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 
@@ -17,7 +18,7 @@ public class Unload {
   public static class Y {
     @Override
     protected void finalize() throws Throwable {
-      keepAlive = this;
+      Unload.keepAlive = this;
     }
   }
   public static class Z {
@@ -26,7 +27,7 @@ public class Unload {
       System.out.println("simonis: exiting Z::run()");
     }
   }
-  public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException {
+  public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException, NoSuchMethodException, SecurityException {
     ClassLoader cl = new URLClassLoader(new URL[] { Unload.class.getResource("..") }, null);
     Object o = cl.loadClass("simonis.Unload$X").newInstance();
     o = null;
@@ -38,13 +39,13 @@ public class Unload {
     o = null;
     cl = null;
     systemGC();
-    // System.out.println(keepAlive);
-    // keepAlive = null;
+    System.out.println(keepAlive);
+    keepAlive = null;
     systemGC();  
 
     cl = new URLClassLoader(new URL[] { Unload.class.getResource("..") }, null);
     Class<?> c = cl.loadClass("simonis.Unload$Z");
-    new MyThread(c).start();
+    new MyThread(c.getDeclaredMethod("run")).start();
     c = null;
     cl = null;
     systemGC();
@@ -58,14 +59,14 @@ public class Unload {
     System.in.read();
   }
   static class MyThread extends Thread {
-    Class<?> receiver;
-    public MyThread(Class<?> c) {
-      receiver = c;
+    Method method;
+    public MyThread(Method m) {
+      method = m;
     }
     public void run() {
       try {
-        receiver.getDeclaredMethod("run").invoke(null);
-      } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {}
+        method.invoke(null);
+      } catch (SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {}
     }    
   }
 }
