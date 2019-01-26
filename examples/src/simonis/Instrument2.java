@@ -22,16 +22,23 @@ public class Instrument2 {
       //Runnable r = A.getRunnable();
       new Thread(r).start();
     }
+    /*
     System.out.println(
         Arrays.asList(InstAgent.getInst().getAllLoadedClasses())
           .stream()
           .map(c -> c.getName())
           .filter(n -> n.equals("simonis.Instrument2$A"))
           .count());
+    */
     System.in.read();
+    System.out.println("Calling System.gc()");
     System.gc();
     System.in.read();
+    System.out.println("Calling stop.countDown()");
     stop.countDown();
+    System.in.read();
+    System.out.println("Calling System.gc()");
+    System.gc();
     System.in.read();
   }
 }

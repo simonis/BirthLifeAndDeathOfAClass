@@ -2051,7 +2051,7 @@ $ java -javaagent:<span class="fragment highlight-current-border" data-fragment-
 public class InstAgent {
   static <span class="fragment highlight-current-border" data-fragment-index="1"><span class="fragment highlight-current-border" data-fragment-index="6">Instrumentation inst</span></span>;
   static <span class="fragment highlight-current-border" data-fragment-index="2">String          pattern</span>;
-  static int             count;
+  static int             count = 0;
 
   public static void premain(<span class="fragment highlight-current-border" data-fragment-index="2">String args</span>, <span class="fragment highlight-current-border" data-fragment-index="1">Instrumentation inst</span>) {
     <span class="fragment highlight-current-border" data-fragment-index="1">InstAgent.inst = inst</span>;
@@ -2127,6 +2127,7 @@ public class Instrument2 {
     }
 
     <span class="fragment highlight-current-border" data-fragment-index="7">System.in.read()</span>;
+    ...
               </code>
             </pre>
           </section>
@@ -2135,32 +2136,36 @@ public class Instrument2 {
 
             <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
               <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
-$ java <span class="fragment highlight-current-border" data-fragment-index="1">-javaagent:InstAgent.jar='simonis/Instrument2$A'</span> simonis.Instrument2
+$ java <span class="fragment highlight-current-border" data-fragment-index="1">-javaagent:InstAgent.jar='simonis/Instrument2$A'</span> simonis.Instrument2   
 <span class="fragment" data-fragment-index="2">  =&gt; <span class="fragment highlight-current-border" data-fragment-index="3">transformimg simonis/Instrument2$A</span>
-0 -&gt; <span class="fragment highlight-current-border" data-fragment-index="5">simonis.Instrument2$A::lambda$0()V</span>
+0 -&gt; <span class="fragment highlight-current-border border-no-bottom" data-fragment-index="4">simonis.Instrument2$A::getRunnable()</span>
+0 &lt;- <span class="fragment highlight-current-border border-no-top   " data-fragment-index="4">simonis.Instrument2$A::getRunnable()</span>
+  =&gt; <span class="fragment highlight-current-border" data-fragment-index="5">re-transforming simonis/Instrument2$A</span>
+1 -&gt; <span class="fragment highlight-current-border" data-fragment-index="6">simonis.Instrument2$A::lambda$0()V</span>
+  =&gt; <span class="fragment highlight-current-border" data-fragment-index="7">re-transforming simonis/Instrument2$A</span>
+2 -&gt; <span class="fragment highlight-current-border" data-fragment-index="8">simonis.Instrument2$A::lambda$0()V</span>
+  =&gt; <span class="fragment highlight-current-border" data-fragment-index="9">re-transforming simonis/Instrument2$A</span>
 ...
-  =&gt; <span class="fragment highlight-current-border" data-fragment-index="4">re-transforming simonis/Instrument2$A</span>
-1 -&gt; <span class="fragment highlight-current-border" data-fragment-index="5">simonis.Instrument2$A::lambda$0()V</span>
-  =&gt; <span class="fragment highlight-current-border" data-fragment-index="6">re-transforming simonis/Instrument2$A</span>
-2 -&gt; <span class="fragment highlight-current-border" data-fragment-index="7">simonis.Instrument2$A::lambda$0()V</span>
-  =&gt; re-transforming simonis/Instrument2$A
-...
-9 -&gt; <span class="fragment highlight-current-border" data-fragment-index="8">simonis.Instrument2$A::lambda$0()V</span></span>
+9 -&gt; <span class="fragment highlight-current-border" data-fragment-index="10">simonis.Instrument2$A::lambda$0()V</span></span>
+              </code>
+            </pre>
 
-<span class="fragment" data-fragment-index="10">$ <span class="fragment highlight-current-border" data-fragment-index="11">jcmd &lt;pid&gt; GC.class_stats</span> InstBytes,KlassBytes,MethodCount,Bytecodes</span>
-<span class="fragment" data-fragment-index="12">Index InstBytes KlassBytes Bytecodes ClassName
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
+<span class="fragment" data-fragment-index="12">$ <span class="fragment highlight-current-border" data-fragment-index="13">jcmd &lt;pid&gt; GC.class_stats</span> InstBytes,KlassBytes,MethodCount,Bytecodes</span>
+<span class="fragment" data-fragment-index="14">Index InstBytes KlassBytes Bytecodes ClassName
   320        16        528         9 simonis.Instrument2$A$$Lambda$1/985922955
   768         0        496        80 simonis.Instrument2
-  769         0        496        70 <span class="fragment highlight-current-border border-no-bottom"     data-fragment-index="13">simonis.Instrument2$A</span>
-  770         0        496        70 <span class="fragment highlight-current-border border-no-bottom-top" data-fragment-index="13">simonis.Instrument2$A</span>
-  ...         .        ...        .. <span class="fragment highlight-current-border border-no-bottom-top" data-fragment-index="13">.....................</span>
-  776         0        496        70 <span class="fragment highlight-current-border border-no-bottom-top" data-fragment-index="13">simonis.Instrument2$A</span>
-  777         0        496        70 <span class="fragment highlight-current-border border-no-top"        data-fragment-index="13">simonis.Instrument2$A</span></span>
+  769         0        496        70 <span class="fragment highlight-current-border border-no-bottom"     data-fragment-index="15">simonis.Instrument2$A</span>
+  770         0        496        70 <span class="fragment highlight-current-border border-no-bottom-top" data-fragment-index="15">simonis.Instrument2$A</span>
+  ...         .        ...        .. <span class="fragment highlight-current-border border-no-bottom-top" data-fragment-index="15">.....................</span>
+  776         0        496        70 <span class="fragment highlight-current-border border-no-bottom-top" data-fragment-index="15">simonis.Instrument2$A</span>
+  777         0        496        70 <span class="fragment highlight-current-border border-no-top"        data-fragment-index="15">simonis.Instrument2$A</span></span>
               </code>
             </pre>
 
 
-<div class="quiz fragment" data-fragment-index="9">
+<div class="quiz fragment" data-fragment-index="11">
   <!-- Quiz content -->
   <div class="quiz-content">
     <div class="quiz-header">
@@ -2332,7 +2337,7 @@ public class Unload {
 
   public static class Y {
     <span class="fragment highlight-current-border border-no-bottom"        data-fragment-index="1">protected void finalize() throws Throwable {</span>
-    <span class="fragment highlight-current-border border-no-bottom-top"    data-fragment-index="1">  <span class="fragment highlight-current-border" data-fragment-index="2">keepAlive = this</span>;                         </span>
+    <span class="fragment highlight-current-border border-no-bottom-top"    data-fragment-index="1">  <span class="fragment highlight-current-border" data-fragment-index="2">Unload.keepAlive = this</span>;                  </span>
     <span class="fragment highlight-current-border border-no-top"           data-fragment-index="1">}                                           </span>
   }
   public static void main(String[] args) throws ... {
@@ -2377,12 +2382,15 @@ $ java -Xlog:class+load,class+unload simonis.Unload | grep simonis
 [class,<span class="fragment highlight-current-border" data-fragment-index="2">load</span>  ] <span class="fragment highlight-current-border" data-fragment-index="2">simonis.Unload$Y</span>
 <span class="fragment highlight-current-border border-no-bottom" data-fragment-index="3">simonis: -&gt; Calling System.gc() ...</span>
 <span class="fragment highlight-current-border border-no-top"    data-fragment-index="3">simonis: &lt;- System.gc() done       </span>
+<!--
 [class,<span class="fragment highlight-current-border" data-fragment-index="4">load</span>  ] <span class="fragment highlight-current-border" data-fragment-index="4">simonis.Unload</span>
+-->
 &lt;RETURN&gt;
-<span class="fragment highlight-current-border" data-fragment-index="5">simonis: -&gt; Calling System.gc() ...</span>
-[class,<span class="fragment highlight-current-border" data-fragment-index="6">unload</span>] unloading class <span class="fragment highlight-current-border" data-fragment-index="6">simonis.Unload</span>
+
+<span class="fragment highlight-current-border" data-fragment-index="5">simonis: -&gt; Calling System.gc() ...</span><!--[class,<span class="fragment highlight-current-border" data-fragment-index="6">unload</span>] unloading class <span class="fragment highlight-current-border" data-fragment-index="6">simonis.Unload</span>-->
 [class,<span class="fragment highlight-current-border" data-fragment-index="6">unload</span>] unloading class <span class="fragment highlight-current-border" data-fragment-index="6">simonis.Unload$Y</span>
 simonis: &lt;- System.gc() done</span>
+<!--
 <span class="fragment" data-fragment-index="7">$ java -Xlog:class+load<span class="fragment highlight-current-border" data-fragment-index="8">=debug</span>,class+unload<span class="fragment highlight-current-border" data-fragment-index="8">=debug</span> simonis.Unload | grep simonis</span>
 <span class="fragment" data-fragment-index="9">[class,<span class="fragment highlight-current-border" data-fragment-index="10">load</span>  ] simonis.Unload <span class="fragment highlight-current-border" data-fragment-index="10">klass: 0x100060030</span> '<span class="fragment highlight-current-border" data-fragment-index="10">ClassLoaders$AppClassLoader</span>'
 [class,<span class="fragment highlight-current-border" data-fragment-index="11">load</span>  ] <span class="fragment highlight-current-border" data-fragment-index="11">simonis.Unload$Y</span> <span class="fragment highlight-current-border" data-fragment-index="11"><span class="fragment highlight-current-border" data-fragment-index="14">klass: 0x100074430</span></span> '<span class="fragment highlight-current-border" data-fragment-index="11">java/net/URLClassLoader</span>'
@@ -2393,6 +2401,7 @@ simonis: &lt;- System.gc() done
 simonis: -&gt; Calling System.gc() ...
 [class,<span class="fragment highlight-current-border" data-fragment-index="13">unload</span>] unloading class <span class="fragment highlight-current-border" data-fragment-index="13">simonis.Unload</span> <span class="fragment highlight-current-border" data-fragment-index="13">0x100074628</span>
 [class,<span class="fragment highlight-current-border" data-fragment-index="14">unload</span>] unloading <span class="fragment highlight-current-border" data-fragment-index="14">class simonis.Unload$Y</span> <span class="fragment highlight-current-border" data-fragment-index="14">0x100074430</span></span>
+-->
               </code>
             </pre>
           </section>
@@ -2408,7 +2417,7 @@ public class Unload {
 
   public static class Y {
     protected void finalize() throws Throwable {
-      keepAlive = this;
+      Unload.keepAlive = this;
     }
   }
   public static void main(String[] args) throws ... {
@@ -2447,6 +2456,39 @@ public class Unload {
 
             <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
               <code class="java" data-trim="true" data-noescape="true" style="height:100%">
+<span/>  public static class Y {
+    protected void <span class="fragment highlight-current-border" data-fragment-index="13">finalize()</span> throws Throwable {
+      <span class="fragment highlight-current-border" data-fragment-index="14">Unload.keepAlive = this;</span>
+    }
+  }
+  public static void <span class="fragment highlight-current-border" data-fragment-index="10">main(String[] args)</span> throws ... {
+    ClassLoader cl = new URLClassLoader(...);
+    o = <span class="fragment highlight-current-border" data-fragment-index="11">cl.loadClass("simonis.Unload$Y")</span>.newInstance();
+    <span class="fragment highlight-current-border" data-fragment-index="12">systemGC();</span>
+    <span class="fragment highlight-current-border" data-fragment-index="15">systemGC();</span>
+              </code>
+            </pre>
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="terminal" data-trim="true" data-noescape="true" style="height:100%">
+<span class="fragment" data-fragment-index="7">$ java -Xlog:class+load<span class="fragment highlight-current-border" data-fragment-index="8">=debug</span>,class+unload<span class="fragment highlight-current-border" data-fragment-index="8">=debug</span> simonis.Unload | grep simonis</span>
+<span class="fragment" data-fragment-index="9">[class,<span class="fragment highlight-current-border" data-fragment-index="10">load</span>  ] simonis.Unload <span class="fragment highlight-current-border" data-fragment-index="10">klass: 0x100060030</span> '<span class="fragment highlight-current-border" data-fragment-index="10">ClassLoaders$AppClassLoader</span>'
+[class,<span class="fragment highlight-current-border" data-fragment-index="11">load</span>  ] <span class="fragment highlight-current-border" data-fragment-index="11">simonis.Unload$Y</span> <span class="fragment highlight-current-border" data-fragment-index="11"><span class="fragment highlight-current-border" data-fragment-index="17">klass: 0x100074430</span></span> '<span class="fragment highlight-current-border" data-fragment-index="11">java/net/URLClassLoader</span>'
+<span class="fragment highlight-current-border border-no-bottom" data-fragment-index="12">simonis: -&gt; Calling System.gc() ...</span>
+<span class="fragment highlight-current-border border-no-top   " data-fragment-index="12">simonis: &lt;- System.gc() done       </span>
+[class,<span class="fragment highlight-current-border" data-fragment-index="14">load</span>  ] <span class="fragment highlight-current-border" data-fragment-index="14">simonis.Unload</span> <span class="fragment highlight-current-border" data-fragment-index="14"><span class="fragment highlight-current-border" data-fragment-index="16">klass: 0x100074628</span></span> '<span class="fragment highlight-current-border" data-fragment-index="14">java/net/URLClassLoader</span>'
+&lt;RETURN&gt;
+<span class="fragment highlight-current-border" data-fragment-index="15">simonis: -&gt; Calling System.gc() ...</span>
+[class,<span class="fragment highlight-current-border" data-fragment-index="16">unload</span>] unloading class <span class="fragment highlight-current-border" data-fragment-index="16">simonis.Unload</span> <span class="fragment highlight-current-border" data-fragment-index="16">0x100074628</span>
+[class,<span class="fragment highlight-current-border" data-fragment-index="17">unload</span>] unloading <span class="fragment highlight-current-border" data-fragment-index="17">class simonis.Unload$Y</span> <span class="fragment highlight-current-border" data-fragment-index="17">0x100074430</span></span>
+              </code>
+            </pre>
+          </section>
+
+          <section class="demo">
+
+            <pre class="big noshadow" style="height:100%; margin: 0;" data-trim="true">
+              <code class="java" data-trim="true" data-noescape="true" style="height:100%">
 public class Unload {
   public static class Z {
     public static void run() throws InterruptedException {
@@ -2457,8 +2499,8 @@ public class Unload {
   public static void main(String[] args) throws ... {
     <span class="fragment highlight-current-border" data-fragment-index="2">ClassLoader cl = new URLClassLoader(...);</span>
     <span class="fragment highlight-current-border" data-fragment-index="3">Class&lt;?&gt; c = cl.loadClass("simonis.Unload$Z");</span>
-
-    <span class="fragment highlight-current-border" data-fragment-index="4">new MyThread(c).start(); // Call Z::run() reflectively</span>
+    // Call Z::run() reflectively
+    <span class="fragment highlight-current-border" data-fragment-index="4">new MyThread(c.getDeclaredMethod("run")).start();</span>
 
     <span class="fragment highlight-current-border border-no-bottom" data-fragment-index="5">c = null; </span>
     <span class="fragment highlight-current-border border-no-top"    data-fragment-index="5">cl = null;</span>

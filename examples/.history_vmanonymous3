@@ -1,0 +1,4 @@
+javap -p -v -cp /tmp simonis.VmAnonymous3$$Lambda$1'
+java -XX:+ShowHiddenFrames -Djdk.internal.lambda.dumpProxyClasses=/tmp simonis.VmAnonymous3
+java -XX:+ShowHiddenFrames simonis.VmAnonymous3
+java simonis.VmAnonymous3
