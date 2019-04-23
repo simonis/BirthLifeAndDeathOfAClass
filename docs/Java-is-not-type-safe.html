@@ -1,0 +1,1454 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=windows-1252">
+   <title>Java is not type-safe</title>
+   <meta name="GENERATOR" content="Mozilla/3.01Gold (WinNT; I) [Netscape]">
+   <meta name="Author" content="Vijay A. Saraswat">
+   <meta name="Description" content="Technical report describing a major security bug in the type-system for Java.">
+   <meta name="KeyWords" content="Java,security,bug,classloader,type-spoofing">
+</head>
+<body vlink="#551A8B" text="#000000" link="#0000EE" bgcolor="#FFFFFF" alink="#FF0000">
+
+<h1 align="CENTER"><font color="#CC0000">Java is not type-safe </font></h1>
+
+<center><address><a href="mailto:vj@research.att.com">Vijay Saraswat </a></address></center>
+
+<center><address><font size="-1">AT&amp;T Research,180 Park Avenue, Florham
+Park NJ 07932 </font></address></center>
+
+<p><font color="#CC0000">Table of Contents </font></p>
+
+<ul>
+<li><a href="#Abstract">Abstract</a></li>
+
+<li><font color="#CC0000"><a href="#Section 1. The">Section 1. The problem</a></font></li>
+
+<li><font color="#CC0000"><a href="#A concrete example.">A concrete example.</a></font></li>
+
+<li><font color="#CC0000"><a href="#Consequences.">Consequences</a></font></li>
+
+<li><font color="#CC0000"><a href="#Can an applet exploit">Can an applet
+exploit type-spoofing?</a></font></li>
+
+<li><font color="#CC0000"><a href="#Section2">Section 2. How does this happen?</a></font></li>
+
+<li><font color="#CC0000"><a href="#Section 3">Section
+3. How can it be fixed?</a></font></li>
+
+<li><font color="#CC0000"><a href="#Allow only one class per FQN to be loaded in.">One
+class per FQN</a></font></li>
+
+<li><font color="#CC0000"><a href="#Check for type-spoofing at run-time.">Run-time
+check</a></font></li>
+
+<li><font color="#CC0000"><a href="#Check types.">
+Check for type-equivalence not name-equivalence
+</a></font></li>
+
+<li><font color="#CC0000"><a href="#Section 4.">Section 4. Conclusion
+</a></font></li>
+
+<li><font color="#CC0000"><a href="#Bibliography">Bibliography</a></font></li>
+
+<li><font color="#CC0000"><a href="#Appendix: Code">Remaining
+code</a></font></li>
+</ul>
+<font color="#CC0000"><font size="-1">Last modified
+date:</font></font><code> Fri Aug 15 19:05:33 1997</code>
+<ul>
+<li><font color="#CC0000"><a href="#Mtable">Added
+comment on method-table generation.
+</a></font></li>
+<li><font color="#CC0000"><a href="#MTComp">Added
+commentary on consequences of fix for method-table generation.
+</a></font></li>
+</ul>
+
+<h3><a name="Abstract"></a><font color="#CC0000">Abstract </font></h3>
+
+<p>A language is type-safe if the only operations that can be performed
+on data in the language are those sanctioned by the type of the data. </p>
+
+<p>Java is not type-safe, though it was intended to be. </p>
+
+<p>A Java object may read and modify fields (and invoke methods) private
+to another object. It may read and modify internal Java Virtual Machine
+(JVM) data-structures. It may invoke operations not even defined for that
+object, causing completely unpredictable results, including JVM crashes
+(core dumps). Thus Java security, which depends strongly on type-safety,
+is completely compromised.</p>
+
+<p>Java is not type-safe because it allows a very powerful way of
+organizing the type-space at run-time (through user-extensible
+<i>class loaders </i>). This power can be utilized to write a
+program that exposes some flawed design decisions in the Java
+Virtual Machine. Specifically, one can produce a class A and an
+associated ersatz class A' which can "spoof" A: its
+name N is the same as A, but it defines members (fields and
+methods) arbitrarily differently from A.  A "bridge "
+class B can be defined which delivers to a class D (for which the
+name N is associated with A') an instance of A. D can then
+operate on this instance as if it is an instance of A', thus
+violating type-safety. </p>
+
+<p>There are two ways in which the violation of type-safety may
+be addressed.  I identify a necessary and sufficient conditions
+on class loaders such that if all the classloaders definable in a
+Java program satisfy this condition, then the program will not
+have any "bridge" classes at run-time, and hence will
+not exhibit this kind of type-spoofing. Thus one may still
+informally argue that a <i>particular</i> Java program may not
+exhibit this kind of type-spoofing, and one may design Java
+programs in the future to satisfy this condition. A reading of
+the informal description of class loaders given in <a href="http://www.javasoft.com/sfaq/may95/security.html">HotJava</a>
+indicate that it may satisfy this condition. </p>
+
+<p>For the <i>language</i> to be type-safe however --- a far more
+desirable alternative --- either the classloader interface must
+be redesigned or the JVM must be fixed.  I argue that arbitrary
+user-definable classloaders represent a significant conceptual
+advance in Java, and should not be limited in any way. On the
+other hand, I show that the JVM design can be fixed (without any
+run-time penalites) by fixing the (link-time) constant pool
+resolution process to take into account information available at
+link-time and not just compile-time. Interestingly, this also
+points out that Java is actually a rather impoverished language
+for programming the Java Virtual Machine -- programs cannot be
+written in Java which exploit (in a type-safe way) some of the
+capabilities of the JVM to manipulate classes loaded in different
+class-loaders.  </p>
+
+<p>Further study is needed to determine if there are any other
+ways in which type-safety can be compromised in Java. </p>
+
+<p> This is a revised version of an earlier note, of the same
+name, that was informally circulated Monday Jul 21, 1997. That
+version had (mistakenly, it now turns out) argued that some
+run-time type-checks were unavoidable for unrestricted
+class-loader functionality. Thanks to Gilad Bracha, Drew Dean,
+Kathleen Fisher, Nevin Heintze, Tim Lindholm, Martin Odersky and
+Fernando Pereira for useful feedback and discussion. I remain
+responsible for the actual contents of this note.  </p>
+
+<h2><a name="Section 1. The"></a><font color="#CC0000">Section 1. The problem
+</font></h2>
+
+<p>Let <i>A</i> and <i>A'</i> be two different classfiles defining a Java
+class with the same fully qualified name (FQN) <i>N</i>. In a running Java
+Virtual Machine (JVM) J, let <i>A</i> be loaded by a class loader <i>L</i>
+(possibly the "null" loader) producing a <i>Class</i> object
+<i>C</i> and <i>A'</i> by a class loader <i>L'</i> producing a <i>Class</i>
+object C'. Let <i>v'</i> be a variable of "type" (we will have
+more to say later about what is a "type" in Java) <i>N</i> in a class <i>D</i>
+loaded in <i>L'</i>. </p>
+
+<p><font color="#CC0000">Proposition: </font>Any instance <i>t</i> of <i>C</i>
+can be stored in <i>v'</i>. </p>
+
+<p><font color="#CC0000">Proposition: </font>J will (attempt to) execute
+any operation defined in <i>A'</i> on <i>t.</i> J will (attempt to)&nbsp;read/write
+any field defined in <i>A' </i>as if it existed in <i>t.</i></p>
+
+<p>This behavior is unexpected. It contradicts the assertion <a href="#Lindholm">[Lindholm,
+P 10]</a>: </p>
+
+<blockquote>
+<p>Compatibility of the value of a variable with its type is guaranteed
+by the design of the Java language ... </p>
+</blockquote>
+
+<p>This behavior can be exploited to place the Java Virtual Machine in
+an "undefined" state in which its behavior is unpredictable,
+potentially compromising the Virtual Machine as well as the computer on
+which it is running. </p>
+
+<p>As I show below (<a href="#analysis"> Section 2 </a>), this
+behavior is a consequence of the design of the constant pool
+resolution process in the Java Virtual Machine. Empirically, I
+have verified that this behavior is exhibited by Sun's JDK 1.1.3
+system, on both Solaris and Windows. </p>
+
+<p>But first let us examine some concrete examples and see what can go
+wrong. </p>
+
+<h3><a name="A concrete example."></a><font color="#CC0000">A concrete
+example. </font></h3>
+
+<p>Let <a href="#R"><i>R</i> </a>be a base class that is desired to be
+spoofed. For simplicity, let it contain just a <i>private</i> field: </p>
+
+<pre><a name="R"></a>public class R {
+ private int <a name="actual r"></a>r = 1; 
+}
+</pre>
+
+<p>Assume that <i><a href="#R">R</a></i> has been loaded into J through
+some class loader, L in J. (For simplicity, take L to be the "system
+loader". So then it must be the case that this file for <i><a href="#R">R</a></i>
+is stored in a directory on CLASSPATH.)</p>
+
+<blockquote>
+<p><font size="-1"><b>Footnote:</b> After this note was written, I
+learnt (Lindholm, private communication) that, for some
+essentially obscure reasons, the null classloader behaves
+slightly differently from other classloaders in 
+ways not publically documented. However, I have since verified that the problems discussed
+in this note arise when L is taken to be some non-null loader.
+</font></p>
+</blockquote>
+
+
+<p>Assume that it is possible to obtain instances of <a href="#R"><i>R</i> </a>through another class, <i><a href="#RR">RR</a></i>, also loaded into L (thus <i><a href="#RR">RR</a></i> also exists in a directory on
+CLASSPATH). <i><a href="#RR">RR</a></i> is the crucial
+"bridge"&nbsp;class --- accessible from within two
+different classloaders, it will allow "crossover". For
+simplicity, <i><a href="#RR">RR</a></i> may be thought of as
+being defined as: </p>
+
+<pre><a name="RR"></a>public class RR {
+  public R getR() {
+    return new R();
+  }
+}
+</pre>
+
+<p><br> Arrange now to load an <a href="#ersatz R1">ersatz class
+<i>R</i></a> in another classloader L' in J. It is important that
+this class have the same fully qualified name (FQN) as the target
+class <i><a href="#R">R</a></i>.  However, the signature of this
+class (its fields and methods, and their associated types) may be
+completely arbitrary, and designed to suit the requirements for
+spoofing. For simplicity, assume that it is just desired to be
+able to read/modify the value of the private variable. Then <i><a href="#ersatz R1">R</a></i> can be defined simply as: </p>
+
+<pre><a name="ersatz R1"></a>public class R {
+  public int r; 
+  }
+}
+</pre>
+
+<p>Arrange now for your code (say in a class <i><a href="#RT">RT</a></i>,
+loaded into L') to receive in a variable, say <i>r</i> (of type <i>R</i>)
+an instance of the <i><a href="#R">R</a></i> class loaded in L. </p>
+
+<p>This can be accomplished, for instance, by arranging for L' to "share"
+the use of the <i>Class</i> object for <i><a href="#RR">RR</a></i> loaded
+into L, as follows. The code for <i>loadClass</i> in L' forwards a request
+to load <i>RR</i> to L: </p>
+
+<pre><a name="DelegatingLoader"></a>/** A classloader that delegates some loads to the system loader,
+ * and serves other requests by reading in from a given directory.
+ */ 
+public class DelegatingLoader extends LocalClassLoader {
+  public DelegatingLoader (String dir) {
+    super(dir);
+  }
+
+  public synchronized Class loadClass(String name, boolean resolve) 
+  throws ClassNotFoundException {
+    Class c;
+    try {
+      if (name.equals("RR") || name.startsWith("java.")) {
+        System.out.println("[Loaded " + name + " from system]");
+        return this.findSystemClass(name);
+      } else 
+        return this.loadClassFromFile(name, resolve);
+    } catch (Exception d) {
+      System.out.println("Exception " + d.toString() + " while loading " + name + " in DelegatingLoader.");
+      throw new ClassNotFoundException();
+    };
+  }
+}
+</pre>
+
+<p>Here, <i><a href="#LocalClassLoader">LocalClassLoader</a></i> is an
+abstract Class loader that knows how to load (through the method <i>loadClassFromFile</i>)
+a class file from a local directory. This local directory should not be
+on the system path (CLASSFILES). Thus an instance of <i><a href="#DelegatingLoader">DelegatingLoader</a></i>
+will load all classes other than those named <i>RR</i> or in <i>java.*&nbsp;</i>packages
+from the local directory. </p>
+
+<p>Now, loading <i><a href="#RT">RT</a></i> into L' will eventually trigger
+the loading of <i>RR</i> by L'. This request is met by returning the <i>Class</i>
+object created by the system loader when it loaded <i>RR</i>. Loading <i><a href="#RT">RT</a></i>
+will also eventually trigger the loading of <i>R</i> in L' --- however,
+this will cause the <a href="#ersatz R1"> ersatz <i>R</i></a> file to be
+loaded into L'. </p>
+
+<p>Thus the stage is set for type confusion. <i><a href="#RT">RT</a></i>
+is set to receive an object from <i><a href="#RR">RR</a></i> which it believes
+to be an instance of the class described by <a href="#ersatz R1">ersatz
+<i>R</i></a>. <i><a href="#RR">RR</a></i> is prepared to send an object
+to <i><a href="#RT">RT</a></i> which is an instance of the class described
+by <i><a href="#R">R</a></i>. </p>
+
+<p>Here is a simple definition of <i><a href="#RT">RT</a></i>: </p>
+
+<pre>/** The user class, referencing and using the ersatz class R.
+ */ 
+<a name="RT"></a>public class RT {
+  public  static void main() {
+    try {
+      System.out.println("Hello...");
+      RR rr = new RR();
+      R r  = rr.getR();
+      System.out.println("  r.r is " + r.r + ".");
+      r.r = 300960;
+      System.out.println("  r.r is set to " + r.r + ".");
+      System.out.println("...bye.");
+    } catch (Exception e) { 
+      System.out.println("Exception " + e.toString() + " in RT.main.");
+    }
+  }
+
+}
+</pre>
+
+<p>Now all that remains is to ensure that <i><a href="#RT">RT</a></i> is
+loaded into L'. This can be accomplished through the helper class <a href="#Test"><i>Test</i>
+.</a></p>
+
+<p>We may now get the trace: </p>
+
+<pre>chit.saraswat.org% java Test RT
+[Loaded java.lang.Object from system]
+[Loaded java.lang.Exception from system]
+[Loaded RT from ersatz/RT.class (996 bytes)]
+[Loaded java.lang.System from system]
+[Loaded java.io.PrintStream from system]
+Hello...
+[Loaded RR from system]
+[Loaded java.lang.StringBuffer from system]
+[Loaded R from ersatz/R.class (238 bytes)]
+  r.r is 1.
+  r.r is set to 300960.
+...bye.
+chit.saraswat.org% 
+</pre>
+
+<h3><a name="Consequences."></a><font color="#CC0000">Consequences. </font></h3>
+
+<p>Intuitively, the JVM is using the information associated with <a href="#ersatz R1">ersatz
+<i>R</i></a> to operate on an instance of <i><a href="#R">R</a></i>. The
+<a href="#ersatz R1">ersatz <i>R</i></a> class specifies the field <i>r</i>
+to be public, so the JVM allows access and update. </p>
+
+<p>But the structure of the <a href="#ersatz R1">ersatz <i>R</i></a> need
+not be related to <i><a href="#R">R</a></i> at all. Suppose for instance,
+<a href="#ersatz R2">ersatz <i>R</i></a> is defined as: </p>
+
+<pre><a name="ersatz R2"></a>public class R {
+  public int r0;
+  public String s = "This represents s."; 
+  public int <a name="r"></a>r; 
+  }
+}
+</pre>
+
+<p>Now the JVM believes that the field <i><a href="#r">r</a></i> lies at
+a specific offset in the memory representing an instance of <a href="#ersatz R2">ersatz
+<i>R</i></a> --- and this offset may well be different from that representing
+the actual field <i><a href="#actual r">r</a></i> in <i><a href="#R">R</a></i>.
+Indeed, given that the size of an instance of <i><a href="#R">R</a></i>
+is smaller than the size of an instance of <a href="#ersatz R2">ersatz
+<i>R</i></a>, references through fields of <a href="#ersatz R2">ersatz
+<i>R</i></a> are going to access memory outside the region set aside to
+represent the instance of <i><a href="#R">R</a></i>. We get: </p>
+
+<pre>chit.saraswat.org% java Test RT
+[Loaded java.lang.Object from system]
+[Loaded java.lang.Exception from system]
+[Loaded RT from ersatz/RT.class (996 bytes)]
+[Loaded java.lang.System from system]
+[Loaded java.io.PrintStream from system]
+Hello...
+[Loaded RR from system]
+[Loaded java.lang.StringBuffer from system]
+[Loaded R from ersatz/R.class (544 bytes)]
+  r.r is 6946913.
+  r.r is set to 300960.
+...bye.
+chit.saraswat.org% 
+</pre>
+
+<p>Similarly, ersatz <i>R</i> may define methods that do not exist in <i><a href="#R">R</a></i>,
+or are in a different position in the method list, or take a different
+number of arguments, or take arguments of different types ... causing complete
+havoc. For instance, suppose ersatz <i>R</i> is defined as: </p>
+
+<pre><a name="ersatz R3"></a>public class R {
+  public int r0;
+  public String s = "This represents s."; 
+  public int r; 
+  public void speakUp() {
+    System.out.println("I have spoken!");
+  }
+}
+</pre>
+
+<p>and <a href="#RT2"><i>RT2</i> </a>is defined as: </p>
+
+<pre>/** Call a method defined on the ersatz class, but not the spoofed class. 
+ */
+<a name="RT2"></a>public class RT2 {
+  public  static void main() {
+    try {
+      System.out.println("Hello...");
+      RR rr = new RR();
+      R r  = rr.getR();
+      System.out.println("Now checking to see if a method defined on this loader's r can be invoked.");
+      r.speakUp();
+      System.out.println("...bye.");
+    } catch (Exception e) {
+      System.out.println("Exception " + e.toString() + " in RT2.main.");
+    }
+  }
+}
+</pre>
+
+<p>We get the very interesting looking: </p>
+
+<pre>chit.saraswat.org% java Test RT2
+[Loaded java.lang.Object from system]
+[Loaded java.lang.Exception from system]
+[Loaded RT2 from ersatz/RT2.class (934 bytes)]
+[Loaded java.lang.System from system]
+[Loaded java.io.PrintStream from system]
+Hello...
+[Loaded RR from system]
+Now checking to see if a method defined on this loader's r can be invoked.
+[Loaded R from ersatz/R.class (544 bytes)]
+SIGBUS    10*  bus error
+    si_signo [10]: SIGBUS    10*  bus error
+    si_errno [0]: Error 0
+    si_pre [1]: BUS_ADRERR [addr: 0x443a7]
+
+        stackbase=EFFFF180, stackpointer=EFFFEEC0
+
+Full thread dump:
+    "Finalizer thread" (TID:0xee300220, sys_thread_t:0xef320de0, state:R) prio=1
+    "Async Garbage Collector" (TID:0xee3001d8, sys_thread_t:0xef350de0, state:R) prio=1
+    "Idle thread" (TID:0xee300190, sys_thread_t:0xef380de0, state:R) prio=0
+    "Clock" (TID:0xee3000d0, sys_thread_t:0xef3b0de0, state:CW) prio=12
+    "main" (TID:0xee3000a8, sys_thread_t:0x40e08, state:R) prio=5 *current thread*
+        RT2.main(RT2.java:9)
+        Test.doIt(Test.java:17)
+        Test.main(Test.java:24)
+Monitor Cache Dump:
+Registered Monitor Dump:
+    Verifier lock: " <unowned>"
+    Thread queue lock: "<unowned>"
+    Name and type hash table lock: <unowned>
+    String intern lock: <unowned>
+    JNI pinning lock: <unowned>
+    JNI global reference lock: <unowned>
+    BinClass lock: <unowned>
+    Class loading lock: <unowned>
+    Java stack lock: <unowned>
+    Pre rewrite lock: <unowned>
+    Heap lock: <unowned>
+    Has finalization queue lock: <unowned>
+    Finalize me queue lock: <unowned>
+    Monitor IO lock: <unowned>
+    Child death monitor: <unowned>
+    Event monitor: <unowned>
+    I/O monitor: <unowned>
+    Alarm monitor: <unowned>
+        Waiting to be notified:
+            "Clock"
+    Sbrk lock: <unowned>
+    Monitor cache expansion lock: <unowned>
+    Monitor registry: owner "main" (0x40e08, 1 entry)
+Thread Alarm Q:
+Abort (core dumped)
+chit.saraswat.org% 
+</unowned></unowned></unowned></unowned></unowned></unowned></unowned></unowned></unowned></unowned></unowned></unowned></unowned></unowned></unowned></unowned></unowned></unowned></unowned></unowned></pre>
+
+<h3><a name="Insidious example"></a><font color="#CC0000">A more insidious example</font></h3>
+
+Here is a more "natural" example of how such a problem may be
+triggered. Suppose that a loader <code>L</code> "exports" the
+service offered by a class <code>RR</code> to other loaders,
+including <code>L'</code>. <code>RR</code> provides a public
+method that needs an instance of <code>R</code>.  But it so
+happens that <code>L'</code>, unaware of the dependency of
+<code>RR</code> on <code>R</code>, also loads <code>R</code> (the
+<code>ersatz R</code>). Now any other class <code>RT</code> in
+<code>L'</code> that wants to use <code>RR</code> will end up
+sending an instance of its <code>R</code>, thereby triggering the
+incompatibility.
+ 
+<h3><a name="Can an applet exploit"></a><font color="#CC0000">Can an applet
+exploit type-spoofing?</font></h3>
+
+<p>To answer this question, let us develop some terminology. Let
+<code>J</code> be some running JVM, initialized with some program
+<code>P</code>, and accepting inputs and delivering outputs to
+its environment. In the following, we consider class objects in
+<code>J</code> (i.e., instances of <code>java.lang.Class</code>)
+to represent types in <code>J</code>. For any such object
+<code>o</code>, <code>cl(o)</code> stands for the loader object
+that created <code>o</code> (i.e. who's invocation of
+<code>defineClass</code> created <code>o</code>). We say that
+<code>cl(o)</code> defines <code>o</code>. The constant pool of
+<code>o</code>, <code>cp(o)</code>, is the constant pool of the
+class file that was used by <code>cl(o)</code> to create
+<code>o</code>. <code>n(o)</code> is the fully qualified name of
+the class whose classfile was read by <code>cl(o)</code> to
+create <code>o</code>. </p>
+
+<p>Over the course of execution of <code>J</code>, a loader <code>l</code> may be presented
+with requests by the JVM to load a class, emanating from its
+desire to do constant resolution. The JVM guarantees that, as
+part of constant resolution, for any name <code>n</code>, it will call <code>l</code> at
+most once to load a class with name <code>n</code>.  Thus at any given instant
+in the execution of <code>J</code>, <code>l</code> will have responded to some finite set
+of requests, by either returning a valid class object, or
+refusing to define a class object. (A loader <code>l</code> may also have
+refused to terminate on some request, but since we are only
+concerned with safety properties, we shall ignore that
+possibility.) We shall model this by associating with <code>l</code> a mapping
+m:&nbsp;m(l) from the set <code>dom(l)</code> of names in the domain of <code>l</code> to
+class objects. </p>
+
+<p>A name <code>n</code> is said to be <font color="#008000">foreign</font>
+ for <code>l</code> if <code>n</code> is in <code>dom(l)</code> and <code>cl(m(l)(n))</code>
+is different from <code>l</code>. </p>
+
+<p><font color="#CC0000">Definition[a refers to b</font>] Let
+<code>a</code> and <code>b</code>&nbsp;be two class objects in
+<code>J</code>. Say that <code>a</code> <font color="#008000">refers</font> to <code>b</code> if
+<code>n(b)</code> occurs in <code>a's</code> constant pool, and
+<code>m(cl(a))(n(b))</code> is defined and equals
+<code>b</code>. That is, <code>a</code> refers to <code>b</code>
+if the code for <code>a</code> refers to the name of
+<code>b</code>, and the name of <code>b</code> is resolved by the
+loader for <code>a</code> into <code>b</code>. </p>
+
+<p><font color="#CC0000">Definition[Bridge]</font> Let <code>J</code> be a
+running JVM.  A <font color="#008000">bridge</font> in <code>J</code> is a set
+of four class objects <code>(r, a', s, a)</code> such that:&nbsp;
+&nbsp;(1)&nbsp; <code> cl(s) = cl(a) =/= cl(r) = cl(a')</code> (2)&nbsp;<code>r</code> refers to <code>s</code> (3) <code>r</code> refers to <code>a'</code>
+(4) <code>s</code> refers to <code>a</code> and (5)&nbsp; <code>n(a) = n(a')</code>. <code>r</code> is said to be the
+<font color="#008000">receiver</font> of the bridge, <code>a'</code> the <font color="#008000">spoofer</font>, <code>s</code> the <font color="#008000">sender</font>, and <code>a</code> the <font color="#008000">spoofee</font>. </p>
+
+<p><font color="#CC0000">Definition[Bridge-safe] </font>A JVM&nbsp;<code>J</code> is
+<font color="#008000">bridge-safe</font> if at no time during its execution
+(and for any input during its execution) may a bridge come into existence.
+
+</p><p>Let us develop some general conditions on (class)&nbsp;loaders that
+will be necessary and sufficient to prevent such bridges from coming into
+existence. </p>
+
+<p><font color="#CC0000">Definition[Isolating foreigners]</font> A loader
+<code>l</code> <font color="#008000">isolates foreigners </font>if for every name <code>n</code>
+foreign for <code>l</code> every class name <code>q</code> in the
+constantpool of <code> m(l)(n)</code> (and in
+the domain of <code>l</code> and <code> cl(m(l)(n)))</code> is foreign for <code>l</code>. </p>
+
+<p>In the example discussed earlier, no instance of <code>DelegationLoader</code> isolates
+foreigners, since the name <code>R</code> occurring in the constantpool of a foreign
+name, <code>RR</code>, is not foreign. </p>
+
+<p><font color="#CC0000">Proposition.</font> Let <code>J</code> be a JVM. <code>J</code> is bridge-safe
+iff every class loader that can come into existence during its execution
+isolates foreigners. </p>
+
+<p><font color="#CC0000">Informal proof.</font> Suppose a bridge <code>(r, a',
+s, a)</code> exists. Then, <code>n(s)</code> is a foreigner for
+<code>cl(r)</code>. Assume <code>cl(r)</code>  isolates
+foreigners. Then <code> n(a)</code> is foreign for <code> cl(r)
+</code>. But <code> n(a) = n(a')</code> and <code> n(a')</code>
+is not foreign for <code> cl(r)</code> (it is mapped to <code> a'</code>). In the other direction assume
+there is a loader <code>l</code> that does not isolate foreigners. Let <code>n</code> be a name foreign
+to <code>l</code>, and name <code>q</code> be in the constant
+pool of <code> m(l)(n)</code>, and <code>q</code> be not foreign
+to <code>l</code>. Construct <code>a</code> class <code>r</code> in <code>l</code> that refers to <code>n</code> and <code>q</code>. Then each of <code>r</code>,
+<code> m(l)(q), m(l)(n), m(cl(m(l)(n)))(q) </code> exists, and taken together constitute
+a bridge. <font color="#CC0000">End of proof.</font></p>
+
+<p>In general, proving for any arbitrary class loader that it is bridge-safe
+may be very difficult -- there may not be enough data available, e.g. about
+the constantpools of the foreign classes. However, some general strategies
+can be followed for <i>designing</i> loaders that isolate foreigners. </p>
+
+<h3><a name="Applet classloader"></a><font color="#CC0000">Applet
+classloader </font></h3>
+
+<p> For instance, a loader constructed as follows will always isolate
+foreigners: It divides its domain into two disjoint parts, the
+"core" domain, <code> cdom(l)</code> and the "user" domain,
+<code> udom(l)</code>. All and only the names in the core domain are
+foreign. Now any such <code>l</code> will isolate foreigners provided that it
+is the case that for every <code>n</code> in the core domain of
+<code>l</code>, <code> cp(m(l)(n))</code>
+is a subset of <code> cdom(l)</code>. Again, in general there may not be enough
+data available to make this decision --- but in practice, one
+would write the "core classes"&nbsp;(the union, across
+all <code>l</code>, of the sets obtained by mapping <code> m(l)</code> across <code>cdom(l)</code>) in
+such a way that they only reference core classes. Under such a
+design practice, the loaders would isolate foreigners. Note
+however, that each time a new class was added to the core, one
+would have to verify that it references only core classes.  </p>
+
+<p>From the informal description of the classloaders given in <a href="http://www.javasoft.com/sfaq/may95/security.html">HotJava</a>,
+it appears that they are written using this methodology. Thus, a
+user may never be unconditionally certain that a particular
+HotJava browser running on his desktop is bridge-safe --- but he
+may be certain under the (reasonable) assumption that the core
+classes already on his disk (and any other core class to be added
+later) satisfy the property that they only reference core
+classes. </p>
+
+<h3><a name="Indirect bridges"></a><font color="#CC0000">Indirect bridges are already ruled out.
+</font></h3>
+<p>Before leaving this topic, I&nbsp;want to point out that another way
+of causing type-spoofing, apparently described earlier by David Hopgood,
+does not work. (I&nbsp;should say "does not work anymore".) Given
+that a "direct"&nbsp;bridge is not possible for loaders that
+isolate foreigners, one may try instead to construct an indirect bridge
+as follows. Consider <code>s</code> and <code>r</code>, such that
+<code> cl(s)</code> is distinct from <code> cl(r)</code>. Find
+an intermediary class <code>i</code>, such that <code>cl(i)
+</code>is distinct from <code>cl(s)</code> and <code> cl(r)</code>. 
+Thus <code>i</code> is foreign to both <code>s</code> and
+<code>r</code>. Pick a name <code>q</code> in the domain of
+<code> cl(s)</code> and <code>cl(r)</code>. Define <code>a</code>
+in <code>cl(s)</code> to inherit from (the type associated with) 
+<code>i</code>, and <code>a'</code> in <code>cl(r)</code> to inherit from <code>i</code>. Now communicate from <code>s</code> an instance
+of <code>q</code> typecast to <code>i</code>, receive it at <code>r</code> at type <code>i</code>, coerce it to type <code>q</code>, and
+use it to spoof. </p>
+
+<p>For instance, concretely, two applets <code>S</code> and <code>R</code>&nbsp;may work in tandem
+to launch this attack. Both will be loaded into their own loaders. Both
+define a type, say <code>RStream</code> to extend <code>java.lang.InputStream</code>, intending to
+use <code>java.lang.System.in</code> as an unwitting conduit between them: <code>S</code> creates
+an instance of its own <code>RStream</code>, and stores it in <code>System.in</code>. When the user
+visits the page containing the applet <code>R</code>,
+<code>R</code> reads <code>System.in</code>, casts the result 
+to (ersatz)&nbsp;RStream, and proceeds to wreak havoc. </p>
+
+<p>The attack fails because the explicit cast at the receiving end generates
+a <code>ClassCastException</code> <a href="#Lindholm">[Lindholm P. 175]</a>:
+it checks that the class that the message is an instance of identical to
+the class being typecast to, or inherits from it. So the <code>checkcast</code>
+JVM&nbsp;instruction checks the "run-time type"&nbsp;as it should.
+</p>
+
+<h2><a name="Section2"></a><font color="#CC0000">Section
+2. How does this happen? </font></h2>
+
+<p>Why does type-spoofing work?&nbsp;What is happening in the
+JVM? 
+
+</p><p>On an abstract note, the heart of the problem lies in the
+somewhat different views of "types" taken by the Java
+compiler and the Java Virtual Machine. The reality in the JVM is
+that multiple class files with the same name and arbitrarily
+different fields and methods can be simultaneously loaded into
+different classloaders. Therefore, a type should be a <b>pair</b>
+<code> (FQN, CL)</code> of a name and the classloader in which the
+corresponding class was loaded. (Primitive types can be
+considered to be identical across all classloaders.) Thus two
+classes have the type iff they have the same <code> FQN </code> and the
+same <code> CL</code>. Though this is stated explicitly in <a href="#Lindholm">[Lindholm P. 24, Sec 2.8.1]</a>, very
+surprisingly neither the Java compiler, nor the JVM build this
+more refined notion of types fully into their operation. </p>
+
+<h3><a name="Current scope or base scope?"></a><font color="#CC0000">Current scope or base scope? </font></h3>
+
+<p> If a type is to be thought of as the pair <code>(FQN,
+CL)</code>, then the huge problem arises of how to make sense of
+<a href="https://www.cis.upenn.edu/~bcpierce/courses/629/papers/Gosling"> [Gosling 96] </a>! Throughout the book, a type is
+talked of as if it is an <code> FQN</code>. There are clearly two ways of
+obtaining an <code> (FQN, CL)</code> pair from an
+<code>FQN</code> --- one may either assume that an <code>
+FQN</code> stands for <code>(FQN, CL)</code> where <code>
+CL</code> is the "current" classloader (I will call this <em>
+current scope </em>), or one may assume <code> FQN</code> stands
+for <code> (FQN, null)</code>, where <code> null</code> is the
+"null" or the system classloader (I will call this <em> base
+scope </em>).
+
+</p><blockquote><p><b><i>
+It appears that <a href="https://www.cis.upenn.edu/~bcpierce/courses/629/papers/Gosling"> [Gosling 96]</a> intends
+different interpretations in different places. 
+</i></b></p></blockquote>
+
+For instance, <a href="https://www.cis.upenn.edu/~bcpierce/courses/629/papers/Gosling"> [Gosling 96, p 40]</a> says:
+
+<blockquote>
+<p>The standard class <code> Object</code>
+is a superclass (Sec 8.1) of all other classes. A variable of
+type <code> Object</code> can hold a reference to any object,
+whether it is an instance of a class or an array (Sec 10). </p>
+</blockquote>
+
+Which type <code>Object</code>? The one associated with the
+class <code>(java.lang.)Object</code> loaded in the <em>
+current </em> classloader (and hence in every class loader)
+(current scope), or the one loaded in the <code> null </code>
+classloader (base scope)?
+
+Experimentally I have verified (in JDK 1.1.3) that an array
+object can be assigned to a variable with typename <code>
+java.lang.Object</code>, even though at runtime the class <code>
+java.lang.Object</code> loaded into the current classloader is
+different from the class <code> java.lang.Object</code> loaded in
+the <code>null</code> classloader. So it seems that current scope
+was intended.
+
+However, we have on <a href="https://www.cis.upenn.edu/~bcpierce/courses/629/papers/Gosling"> [Gosling 96, p 466]</a>:
+
+<blockquote>
+There is no public constructor for the class <code>
+Class</code>. The Java Virtual Machine automatically constructs
+<code> 
+Class</code> objects as classes are loaded; such objects cannot
+be created by user programs. 
+</blockquote>
+
+<p>Which type <code> Class</code>? Current scope or base?
+Experimentally I have verified that (in JDK 1.1.3) the <em>
+base </em> interpretation is intended in this case: always the
+<code> Class</code> objects created are instances of the <code>
+Class</code> class loaded in the <code> null</code>
+classloader. </p>
+
+<p>It seems to me that the designers intended current scope for
+"user-defined" classes (and this is how the JVM is
+designed). Clearly, the notion of multiple classloaders does not
+make sense otherwise. (You want the classnames in the applet code
+loaded to refer to the classes loaded into the same loader.)
+However it seems that base scope is intended for some predefined
+"system" classes (this notion is not explicitly defined in the
+book, but implicitly referred to) such as <code> java.lang.Class
+</code> and <code> java.lang.String</code>.</p>
+
+<p>In the interests of cleanliness of system design it seems to me
+that current scope should be adopted uniformly. One very
+attractive property of such a proposal would be that it would
+allow different object systems, with very different
+behaviors to be implemented very easily within Java --- merely by
+changing the basic classes loaded into a given loader! --- increasing
+its attraction as a language in which to experiment with
+different OO language designs.</p>
+
+<p>This confusion in thinking leads to the problem highlighted in
+this paper. To see how, let us turn to an analysis of how Java
+links and runs code. </p>
+
+<h3><a name="Dynamic linking"></a><font color="#CC0000">Dynamic
+linking in Java. </font></h3>
+
+<p>To support dynamic linking, the class file corresponding to a
+Java source file retains (in its constant pool) the symbolic FQNs
+of the classes, interfaces, fields, methods (and their typenames) in
+its byte-code. For instance, a method invocation on an object is
+associated in the class file with the name of the method being
+invoked, the name of the class containing the declaration of the
+method, and the <i> descriptor </i> of the method, which captures
+the <i> name </i> (and sequence) of the argument typenames and the
+return typenames of the method.  </p>
+
+<p> At run-time operations involving these symbolic references
+are converted into operations involving actual offsets into field
+and method-tables through a process known as 
+<font color="#FF00FF">constant pool resolution (CPR) </font> 
+<a href="#Lindholm">[Lindholm Chapter 5]</a>.
+
+
+
+</p><blockquote>
+<p><font size="-1"><b>Footnote:</b> 
+The opcodes which can initiate CPR activity are:
+<code> getfield</code>, <code> getstatic</code> (getting the
+value of instance and static fields); <code> putfield</code>,
+<code> putstatic</code> and <code> aastore</code> (setting the
+value of instance and static fields, and entries in an array);
+and <code> invokeinterface</code>, <code> invokespecial</code>,
+<code> invokestatic</code> (invoking constructors and methods).
+</font></p>
+</blockquote>
+
+<p>Now consider what happens at run-time when a method <code> m
+</code> on class <code> c</code>, with descriptor d <code>
+is</code> invoked on object <code> o</code> (using the <code>
+invokevirtual</code> instruction, <a href="#Lindholm">[Lindholm
+P267-8]</a>.  (Similar considerations apply to other instructions
+concerned with reading/writing fields, or invoking methods.)  The
+associated class loader is asked to load the class <code>
+c</code>. (This may involve, recursively, the loading of other
+classes, e.g. the superclass of <code> c</code>.)</p>
+
+<blockquote>
+<p><font size="-1"><b>Footnote:</b> Note that the code loaded by the class
+loader in response to this request may have <i>no</i> relationship with
+the code used by the compiler to compile this class. No "compiled-with"
+information is stored by the compiler in the class file for use at link-time.
+</font></p>
+</blockquote>
+
+<p>Once that is accomplished, <code> d</code> is matched against
+the descriptors of methods defined in the just loaded
+class (this is called resolving the method) 
+<a href="#Lindholm">[Lindholm 97, p148]</a>.
+</p><blockquote><p><a name="NoSuchMethodError">
+If the referenced method does not exist in the specified
+class or interface, field resolution throws a
+<code>NoSuchMethodError</code>. </a>
+</p>
+</blockquote>
+
+<p>From the description it is not completely clear how it is
+determined that the referenced method does not exist in the
+specified class or interface. The most natural assumption seems
+to be that two methods are considered "equal" if they are 
+<a name="name-equivalent"> <font color="#FF00FF">name-equivalent</font> </a>, i.e., they have the same
+name and the same method descriptor, which records the sequence
+of FQNs for the arguments and the FQN for the result.</p>
+  
+<p> An exception is thrown if there is no such method. The result of
+resolving is an index <code> i</code> into a method table. </p>
+
+<p>Note that this entire process involves classes loaded by the current class
+loader. These classes are supposed to be the runtime equivalents of the
+classes used by the compiler when creating the class file, so this process
+is analogous to what a compiler would have done in a statically-linked
+language: identify the layout of the class on which a method is being invoked,
+and determine the offset of the method in it. Note that: </p>
+
+<blockquote>
+<p><b><i>No "run-time" information (e.g., the actual <code> Class
+</code>  object corresponding to <code> o</code>) is used in this
+process. </i></b></p>  
+</blockquote>
+
+<p>Now that this offset has been determined, it is <i>assumed</i> that
+this is a valid offset in the method table of the actual (run-time) class
+of the object. The method description <i>assumed</i> to be at that offset
+is then executed <a href="#Lindholm">[Lindholm 97, p267-8] </a></p>
+
+<blockquote>
+<p>The constant pool entry representing the resolved method includes an
+unsigned <i>index</i> into the method table of the resolved class and an
+unsigned byte <i>nargs</i> that must not be zero. </p>
+
+<p>The <i>objectref</i> must be of type <i>reference</i>. The <i>index</i>
+is used as an index into the method table of the class of the type of <i>objectref</i>.
+</p>
+</blockquote>
+
+<blockquote> <p><font size="-1"><b>
+<a name="Mtable"> Footnote:</a></b> On first glance,
+it may seem that the index <code> k </code> could equally have
+been used to index into the method table <code> M[B] </code> of
+the resolved class <code> B </code>. However, that would be
+incorrect.  
+
+The object being operated upon may actually be an instance of a
+subtype <code> C </code> of the "compile-time" type <code> B
+</code>. <code> M[C].k </code>, the entry at index <code> k
+</code> in the method table for <code> C </code> may thus 
+contain a pointer to a piece of code that overrides <code>
+M[B].k </code>, and it is <code> M[C].k </code> that should
+execute, per the language rules detailed in <a href="#Gosling">[Gosling 96].</a></font></p><font size="-1">
+
+For this technique to work, it is crucial that the index <code> k
+</code> computed at link-time from the compile-time typename
+<code> B </code> point to the "same" method in <code> M[C]
+</code>. Therefore, the method lookup operation --- 
+which determines from a method signature and an object the piece
+of code of that signature that should run on the object ---  can
+be optimized away at compile-time, as is standard for
+statically-typed OO languages.  
+
+However, the notion of "method tables" --- and how they might be
+computed, and how method lookup might be optimized away, and the
+constraints that it imposes on method and field layout --- is not
+discussed anywhere in <a href="#Lindholm">[Lindholm 97],</a>
+a most regrettable oversight, particularly so because it will
+turn out to be quite related to a <a href="#Fix"> proposed fix
+</a> below.
+</font><p></p> </blockquote>
+
+<p> Here is where the problem becomes manifest: The 
+above scheme  is a correct implementation strategy <b>exactly</b>
+under the assumption that the class of the type of
+<i>objectref</i> is <code> c</code>, the just-resolved
+class. As we have seen, this assumption is not always true. </p>
+
+<p>Therefore, type-spoofing arises as a consequence of the
+particular way in which JVM instructions have been defined. Hence
+it should arise in any valid implementation of the JVM spec. In
+addition, Sun's JVM implementation uses certain "quick"
+instructions to rewrite the opcode corresponding to the
+invocation with the information obtained from method resolution.
+This is crucial to avoid the cost of symbolic lookup on every
+member access, and it makes sense under the assumption above,
+since the information obtained from member resolution is
+invariant under any operations on the JVM (e.g.  the JVM does not
+allow classes to be reloaded). But if the assumption is invalid
+for a particular call, then the "quick" instructions
+merely speed up an erroneous process. </p>
+
+<p>However, it is clear that any reasonable implementation must
+work to avoid incurring the constant pool resolution cost on
+every member access.  Therefore, an important consideration in
+evaluating schemes to fix the type-spoofing problem has to be its
+support for "quick" schemes. </p>
+
+<h2><a name="Section 3"></a><font color="#CC0000">Section
+3. How can it be fixed? </font></h2>
+
+<p>This particular failure of type-safety may be fixed in various
+ways. One may consider enriching the notion of types that the
+compiler works with to include also some static representation of
+class loader identity. However, rather than modifying the Java
+language, in the following I consider three ideas that tackle the
+problem of repairing type-safety for Java at the level of the
+JVM. </p>
+
+<h3><a name="Allow only one class per FQN to be loaded in."></a><font color="#CC0000">Allow
+only one class per FQN to be loaded in. </font></h3>
+
+<p>Type-spoofing cannot happen as long as every class loader L responds
+to a <code>loadClass</code> request by performing a
+<code>defineClass</code> on some appropriately obtained
+bytes. Consequently, L will be asked to resolve 
+any type references within the class just loaded, and so on --- thus there
+can be no possibility of an instance coming into L's world (that is, into
+the state of an object that is an instance of a class loaded by L) which
+is not an instance of a class loaded in L. And since L, like every other
+class loader, guarantees that there is at most one loaded classfile for
+every FQN, there can be no spoofing. </p>
+
+
+<p>In a related vein, one may mandate a global consistency condition across
+all classloaders: <i>for any given FQN, at most one class file can be loaded
+into a JVM</i>. This can be achieved, for instance, by generating an exception
+if any class loader attempts to call a <i>defineClass</i> for a FQN for
+which a <i>defineClass</i> has already been called (regardless of the loader
+involved). </p>
+
+<p>This proposal has some merits. The notion of class loaders still makes
+sense --- a particular class loader can still be used to enforce "name
+space access" policies. Constant pool resolution can still be used
+to trigger a request to the class loader to load a class --- which a class
+loader is free to deny or service. </p>
+
+<p>However, it will also make impossible some rather interesting
+uses of class loaders that are currently permitted. Currently, it
+turns out to be possible to define a class loader which can
+redefine system objects, e.g. <code>java.lang.Object</code>, for the
+classes loaded into it. This is of great use in cases (e.g. in
+the design of <a href="#Matrix">Matrix</a>) where it is desired
+to run arbitrary Java code unchanged, while guaranteeing some
+additional properties (e.g. that the number of objects created by
+the code is bounded). However this can only be accomplished if
+there are two classes with the FQN&nbsp;<code>java.lang.Object</code>
+loaded into the JVM:&nbsp; one is used in the name-space for the
+application to provide the "controlled"&nbsp;version of
+the type, and the other is used in some other loader to provide
+the primordial class from which all other classes are
+constructed. </p>
+
+<ul> <p><font size="-1"><b>Footnote:</b> Some care has to be taken
+in compiling these classes since the Java compiler --- unaware
+that these two classes with the same FQN are going to be loaded
+into different class loaders ...  it has no conception even of
+different class loaders!! --- may erroneously claim type
+circularity. A&nbsp;simple solution is to transform the classfile
+generated and splice in the correct superclass
+manually.)</font></p> </ul>
+
+<p>Schemes for security in a similar vein are also suggested in
+<a href="#Wallach 97">[Wallach 97].</a> </p>
+
+<h3><a name="Check for type-spoofing at run-time."></a>
+<font color="#CC0000">Modifying the semantics of the JVM.  </font>
+</h3>
+<p>We consider now two proposals to fix this problem by fixing the
+JVM. </p>
+
+<h4><font color="#CC0000">Check for type-spoofing at run-time.</font>
+</h4>
+
+<p>Java is often said to have a
+"static"&nbsp;type-system. A more accurate term would
+be "link-time" type system, since many type checks are
+delayed till link-time (and almost no type-checks are performed
+at run-time; here by run-time I mean the second or subsequent
+invocation of an instruction). For instance, as discussed above,
+symbolic references to methods are resolved into concrete offsets
+into the method table only at link-time, after constant pool
+resolution. If the method does not exist, an exception is
+thrown. </p>
+
+
+<p>One way of fixing the type-spoofing problem is to perform the check
+for type-safety at runtime. Thus instructions such as <code>invokevirtual
+</code>should check that the <code>Class</code> of the object being operated upon
+is in fact the object generated by loading the classfile obtained by resolving
+the type. If not, then an <code>IllegalReferenceException </code>should be thrown.In
+essence it should not be possible for a class like <i><a href="#RT">RT</a></i>
+to use static types to operate on an instance of <i><a href="#R">R</a></i>
+--- in some sense the type corresponding to <i><a href="#R">R</a></i> should
+be considered <i>hidden</i> in L' by <a href="#ersatz R1">ersatz <i>R</i></a>.
+(However, it should continue to be possible for <i><a href="#RT">RT</a></i>
+to operate on an instance of <i><a href="#R">R</a></i> through reflection
+(that is, using the class object corresponding to <i><a href="#R">R</a></i>).
+Such a use is type-safe since only the methods defined in <i><a href="#R">R</a></i>
+can be used to operate on the instances of <i><a href="#R">R</a></i>.)</p>
+
+<p>A natural question arises whether this run-time check can be
+reduced to a link-time check. That is, would it work to just
+check the use of the particular invokevirtual instruction first
+time it is executed?&nbsp;The intuition would be that if the
+first time around the <code> Class</code> of the object being
+operated upon is identical to the class obtained by resolving the
+type, the the instruction could be rewritten to the quick form of
+the instruction.  Subsequently the quick version would not need
+to perform the runtime check.  </p>
+
+<p>This scheme cannot work, however, for there may be more than one sources
+for the spoofed type. Using earlier terminology, there may be multiple
+bridges, sharing the same receiving endpoint. Put the expression in a 
+method call, so now there is no link-time way of knowing whether or not all 
+or none of the executions of <code>invokevirtual</code> will generate errors:
+</p>
+
+<pre>public callSpeakUp(R r) {
+  r.speakUp();
+}
+</pre>
+
+
+<p>quick instructions may still be of some use however: Check if
+the runtime class is the expected class, if so use the offset
+stored in the quick instruction, else throw an exception.</p>
+
+<h3><a name="Check types."></a>
+<font color="#CC0000">Check for type-equivalence not name-equivalence
+</font> </h3>
+<p> Run-time performance is a big drawback of the scheme
+given above, though the additional flexibility of run-time typing
+is considerable. </p>
+
+<p>However, let us ask ourselves the question: why did the need for
+run-time type-checking arise in the first place? Let us go back
+and examine the canonical program:</p>
+
+<pre>
+public class RT {
+  public  static void main() {
+    try {
+      System.out.println("Hello...");
+      RR rr = new RR();
+      R r  = rr.getR();
+      System.out.println("  r.r is " + r.r + ".");
+      r.r = 300960;
+      System.out.println("  r.r is set to " + r.r + ".");
+      System.out.println("...bye.");
+    } catch (Exception e) { 
+      System.out.println("Exception " + e.toString() + " in RT.main.");
+    }
+  }
+
+} </pre> 
+
+<p> If we assume that this program text is to be understood
+with FQNs resolved using current scope, then it is clear that the
+<code>rr.get(R)</code> should return something of type
+<code>(R,L')</code>, where <code>L'</code> is the classloader in
+which <code>RT</code> is loaded. However, the method
+<code>getR</code> defined in <code>RR</code> (which is of type
+<code>(RR,L)</code> actually returns something of type
+<code>(R,L)</code>, a different type! Therefore the method that
+is being looked for here, namely a method named <code>getR</code>
+of type <code> () -&gt; (R,L')</code> does not actually exist in
+class <code>(RR,L')</code> (which is the same as
+<code>(RR,L)</code>). Therefore <a href="https://www.cis.upenn.edu/~bcpierce/courses/629/papers/NoSuchMethodError">
+method resolution </a> should  <em> fail </em>, and a <code>
+NoSuchMethodError</code> should be thrown.</p>
+
+
+<p> This therefore is a general <a name="Fix"> fix </a> for this problem: use
+<em> type-equivalence </em> instead of name-equivalence when resolving
+methods and fields.  Instead of comparing equality of method
+descriptors, resolve the names that occur in the descriptors, and
+consider the descriptors to be the same only if the resolved
+names are identical. Thus, in this example, compare the
+signatures <code> () -&gt; (R, L) </code> and <code> () -&gt; (R,L')
+</code> instead of the descriptors <code> () -&gt; R </code> and
+<code> () -&gt; R </code>. </p>
+
+<p>We do not yet have a formal semantics for the JVM (though a
+simple constraint-based typing scheme for Java and the JVM is
+being developed for which it should be easy to establish
+soundness). Here we can only argue informally for correctness.
+Intuitively, with this fix, we will have the property that any
+location <code> l</code> with typename <code>N</code> (e.g. local
+variable) created from a class <code>C</code> can only store
+objects whose type is <code>(N, L)</code> where <code>L</code> is
+the classloader that <code>C</code> was loaded in. Thus it is as
+if the code executing at run-time is obtained from the code at
+compile-time by uniformly replacing the names <code>N</code> by
+the types <code>(N,L)</code>.  If at compile-time the constraints
+on types generated from a class were consistent when type-names
+were substituted for types, then at run-time these constraints
+should be consistent with <code>(name, CL)</code> pairs being
+substituted for the types --- or else a linkage error would
+occur. (One can think of these errors being discovered through
+propagation of equality constraints between types; when a
+classloader <code>L</code> forwards a request to load a class
+<code>C</code> to a loader <code>L'</code>, it is as if it is
+publishing the constraint <code>(C,L) = (C,L')</code>. Link time
+type-checking is merely propagating the consequences of a
+conjunction of such constraints.)  Thus compile-time
+type-consistency should "parametrically" translate to run-time
+type-consistency.  This argument needs to be made precise.</p>
+
+<p>An attractive property of this fix is that there is no run-time
+cost, since constant pool resolution is a link-time
+activity. Thus this appears to be the appropriate fix for this
+problem. </p>
+
+<h4><font color="#CC0000"><a name="MTComp"> Implications for method table computation. </a></font></h4>
+<p> An important implication of uniformly using type-equivalence
+rather than name-equivalence is worth describing explicitly,
+since it highlights some subtle interactions. </p> 
+
+Consider the code:
+<pre> 
+class B {
+  void m(T a) {..code1...}
+}
+class C extends B {
+  void m(T a) {...code2...}
+}
+class D {
+ void r(B b) {
+   b.m(new T());
+  }
+ void s() {
+  r(new C());
+ }
+}
+</pre>
+
+<p>Now consider two class loaders <code> L</code>and
+<code>L'</code> such that (in our earlier terminology) <code>
+cl(m(L)(B))=L', cl(m(L)(C))=L</code> and further <code>
+cl(m(L)(T)) =/= cl(m(L')(T)).</code> That is, <code> B</code> and
+<code>C</code> are loaded into different class loaders, and the
+two classloaders differ on how they interpret <code>T.</code>
+
+Suppose <code> D </code> is loaded in <code> L'.</code> In this
+case, the call to <code> b.m </code> will resolve at type <code>
+(T, L') -&gt; void </code> and will obtain the offset corresponding
+to <code> code1.</code> Suppose <code> D</code> is loaded in
+<code> L.</code> In this case, the resolution of <code>
+b.m</code> at type <code> (T, L) -&gt; void</code> will yield a <code>
+MethodNotFoundError</code>. In neither case will <code> code2
+</code> be considered to have overridden <code> code1 </code>.
+This is the case even if at runtime, as in the case of the call
+from within <code> s</code>, the actual argument passed into
+<code>r</code> is an instance of a class with typename
+<code>C.</code>
+
+
+</p><p> An implication of this example is that type information, rather than just
+typename information, must be taken into account at the time that
+the method table for a class is built. In detail, when a loader
+<code> L</code> is ready to create an instance of class <code> C</code> that inherits
+from <code> B</code>, <code> L</code> must determine the method
+table of <code> C</code> given that of <code> B</code>. In
+order to do so, the typenames that occur in the arguments of
+methods defined in <code> C</code> must be resolved, so that it
+can be determined whether <code> L</code> and the classloader
+for <code> B</code> agree on their interpretation. (Two
+classloaders <code> L</code> and <code> L'</code> agree on 
+the interpretations of a name <code> N</code> if they both map
+<code> N</code> to the same <code> Class</code>
+object.)</p>
+
+<p>The requirement to resolve method typenames when a method table
+is to be constructed for a class may be considered somewhat
+onerous. It requires "preloading" some classes (the classes
+corresponding to argument types of methods). Three points are to
+be made here. 
+
+</p><p> First, preloading is needed only if the class is not already
+loaded --- as more and more classes get loaded over time, the
+number of classes that would need to be preloaded should
+decrease.</p>
+
+<p> Second, preloading is necessary only if the parent class has
+been loaded into a different class loader. If it is loaded into
+the same loader, then by definition the types associated with the
+same name in the constant pools of both classes will be the same.
+For most (perhaps even almost all) classes, this will  be the
+case. </p>
+
+<p> Third, it is not necessary to perform any of the operations
+with the preloaded code (e.g. preparation, initializaton,
+verification etc). Rather, an even weaker notion than
+interpretation-equivalence --- <em> definer-equivalence </em> ---
+can be used.  For a classloader <code> L</code> and name <code> N
+</code>, define <code> D(L, N)</code> to be the classloader whose
+<code> defineClass</code> operation will yield the <code>
+Class</code> object that <code> L</code> will return when asked
+to resolve <code> N</code>. Then, all that is needed is to
+determine, for each relevant <code> N</code>, whether <code> D(L,
+N) = D(L', N)</code>. </p>
+
+<p> As an aside, it is not very difficult to design a protocol
+between the JVM and the classloader which allows the JVM to
+deduce definer-equivalence information in a reliable way.  When
+the JVM needs to obtain <code> D(L, N)</code> information, it
+calls a (user-definable)
+</p><pre>  java.lang.ClassLoader definingLoader(String n)
+</pre>
+method on <code> java.lang.ClassLoader</code> object <code>
+L</code> with argument <code> N</code>, recording the result in
+an internal table. This table may now be used to resolve
+definer-equivalence questions.  Subsequently, when the JVM has need
+(e.g. through the constant pool resolution process), to resolve
+<code> N</code>, it will call 
+<pre> Byte[] loadBytes(String)
+</pre>
+operation on the object previously recorded, and perform
+an internal <code> defineClass</code> operation to obtain the
+class object. 
+<p></p>
+
+<ul> <p><font size="-1"><b>Acknowledgement:</b> Thanks to Gilad Bracha for
+clarifying discussions on this point, and for suggesting that an
+explicit discussion here would be appropriate. 
+</font></p></ul><p></p>
+
+<h4><font color="#CC0000"> Implications for name
+space coordination. </font></h4>
+
+<p>A consequence of this fix is that the responsibility for avoiding
+link-time type-errors now falls on the class-loaders. If they are
+to share a type (e.g. <code>RR</code>), then they must arrange to
+share all types referenced in that type (e.g., <code> R</code>),
+otherwise link-time errors will be generated. Crucially, the JVM
+will not crash --- only link-time errors will be generated,
+which, in some sense, is the best that can be expected. It is not too
+difficult to devise "type-publication" schemes (as we have done
+for <a href="https://www.cis.upenn.edu/~bcpierce/courses/629/papers/Matrix"> Matrix </a> by which
+class-loaders can cooperate (by dynamically sharing appropriate
+parts of their name spaces) so that link-time type-errors can
+also be avoided. More details will be developed in a fuller
+version of this paper. </p>
+
+<p>A final remark. If this solution were to be taken to be the
+one that Java designers had in mind, it is rather surprising that
+there is such a big gap between the type-expressiveness of Java
+and what is possible with classloaders. In essence, the notion of
+classloaders has not been reified in the type-structure of the
+language --- it remains strictly under the hood.  The only
+programs that can be written in Java (the language as it now
+stands) are those that are "uniformly parametric" over
+classloaders (that is they work the same way in all
+classloaders), and that cannot statically refer to types other
+than in the current classloader. I do not view either of these
+conditions as necessary for what I take to be a real technical
+contribution of Java designers, namely, link-time
+type-checking. For instance it should be possible to define
+link-time type-checkable schemes which allow a class to impose
+certain constraints on "foreign types", e.g. requiring that they
+be mutually consistent (i.e., come from the same classloader).
+This view of a classloader as imposing a certain consistency
+condition on type-resolution needs to be developed more fully.
+</p>
+
+<h2><a name="Section 4."></a><font color="#CC0000">Section 4. Conclusion
+</font></h2>
+
+<p>Java is a big, paradigm-forming leap forward for the C/C++
+family of languages. It is clean enough that formal analyses of
+the language (and its type system) can be contemplated, and rich
+and powerful enough that large (distributed) systems development
+can be supported. Even more importantly, its elegance makes it a
+pleasure to program in.</p>
+
+<p>Nevertheless, it is a new language being developed with breakneck speed,
+sometimes in areas which are not yet clearly understood by researchers.
+A rigorous, perhaps even formal, analysis of the language, focusing on
+its security properties seems urgently called for. Otherwise we will continue
+to have the spectre of subtle, but potentially fatal, design flaws hovering
+over our heads.</p>
+
+<p><font color="#CC0000">Related work. </font>Some brief comments about
+related work. Recently there has been much interest in security for Java.
+<a href="http://www.javasoft.com/sfaq">Javasoft's security FAQ</a> contains
+information their status on security-related bugs they know of currently.
+<a href="http://kimera.cs.washington.edu/">The Kimera project</a> has developed
+their own bytecode verifier and is using some weak methods to probe for
+flaws in Javasoft's bytecode verifier. In addition, they are working on
+a security architecture for Java. <a href="http://www.cs.princeton.edu/sip">The
+Secure Internet Programming group</a> at Princeton has explored a variety
+of security-related issues. The <a href="http://www.rstcorp.com/java-security.html">Java
+Security:&nbsp;Hostile Applets, Holes, and antidotes</a> contains a very
+readable account of recent work on security bugs in Java. </p>
+
+<p>Classloaders have come under some scrutiny recently. The so-called Princeton
+class-loader attack involves a hostile class-loader that responds with
+different class objects to queries for the same name. This has been neutralized
+by keeping the table mapping names to classes internal to the JVM --- the
+JVM now guarantees that it will call a loader at most once for any given
+name. The Hopwood tag-team applet attack is described above (building an
+indirect bridge). The attack apparently used to work because classcasting
+of exceptions and interfaces was not implemented correctly in earlier versions
+of Java. The technique for subverting the type system described above is
+more insidious in that it does not rely on any classcasting. </p>
+
+<p> After I circulated this note, some earlier related work was
+brought to my attention. Drew Dean remarked that he had made this
+realization in January 97, after someone posted a program on a
+news group, which implied this problem.	He has since developed
+some ideas for fixing this problem.  
+</p>
+
+<p> In his ECOOP '96 tutorial, Martin Odersky noted that multiple
+classes with the same name can be loaded at once in different
+classloaders and are treated as "the same type". This is not
+strictly true, since as we have seen above, different instructions
+behave differently, some (such as checkcast) are sensitive to
+(typename, loader) information, and some only to typename
+information. He also noted that private variables can be accessed
+by declaring them public in a clone class. Indeed, there seems to
+be a "related" bug in JDK in which public access (from classes
+loaded from the null classloader) to private methods is not
+checked by the Javasoft verifier.  (This privacy violation was
+also pointed out to me by Nevin Heintze.) </p> 
+
+
+
+<h2><a name="Bibliography"></a><font color="#CC0000">Bibliography </font></h2>
+
+<p><a name="Lindholm"></a>[Lindholm 97] Tim Lindholm and Frank Yellin "The
+Java Virtual Machine Specification", Addison-Wesley,
+1997. </p>
+
+<p><a name="Gosling"></a>[Gosling 96] James Gosling and Bill Joy
+and Guy Steele "The Java Language Specification",
+Addison-Wesley, 1996. </p>
+
+<p><a name="Matrix"></a>[Saraswat 97] Vijay Saraswat "The Matrix of
+Virtual Worlds", AT&amp;T&nbsp;Research, manuscript, July 1997.</p>
+
+<p><a name="Wallach 97"></a>[Wallach 97] Dan S. Wallach, Dirk Balfanz,
+Drew Dean, Edward W. Felten "Extensible security architectures for
+Java", Technical Report 546-97, Department of Computer Science, Princeton
+University, April 1997. <a href="http://www.cs.princeton.edu/sip/pub/extensible.html">Online
+version. </a></p>
+
+<h2><a name="Appendix: Code"></a><font color="#CC0000">Appendix: Code listing</font></h2>
+
+<p>Place in the current directory the (.class) files for: Test, (the real)
+R, RR, DelegatingLoader, LocalClassLoader. Make sure the current directory
+is on CLASSPATH. </p>
+
+<p>Place in ./ersatz the (.class) files for: (ersatz) R, RT, RT2, RT3.
+</p>
+
+<pre><a name="LocalClassLoader"></a>// LocalClassLoader.java
+import java.lang.*;
+import java.util.*;</pre>
+
+<pre>import java.lang.reflect.*;
+import java.io.*;
+
+/** Defines a Class Loader that knows how to read a class 
+ *  from the local file system.
+ */
+
+public abstract class LocalClassLoader extends java.lang.ClassLoader {
+  private String directory; 
+  public LocalClassLoader (String dir) {
+   directory = dir;
+  }
+
+  protected Class loadClassFromFile(String name, boolean resolve) 
+       throws    ClassNotFoundException, FileNotFoundException {
+    File target = new File(directory + name.replace('.', '/') + ".class");
+    if (! target.exists()) throw new java.io.FileNotFoundException();
+    long bytecount = target.length();
+    byte [] buffer = new byte[(int) bytecount];
+    try {
+      FileInputStream f = new FileInputStream(target);
+      int readCount = f.read(buffer);
+      f.close();
+      Class c = defineClass(name, buffer, 0, (int) bytecount);
+      if (resolve) resolveClass(c);
+      System.out.println("[Loaded " + name + " from " + target + " ("+ bytecount + " bytes)]");
+      return c;
+    }
+    catch (java.lang.Exception e) {
+      System.out.println("Aborting read: " + e.toString() + " in LocalClassLoader.");
+      throw new ClassNotFoundException();
+    };
+  }
+}
+</pre>
+
+<pre>//<a name="Test"></a> Test
+import java.lang.reflect.*;
+
+/** Test harness for classloader examples. Loads the user class into
+ * a newly constructed DelegatingLoader. 
+ */
+public class Test {
+  DelegatingLoader loader;
+
+  public void doIt(String argv[]) {
+    try {
+      if (argv.length &lt; 1) {
+        System.out.println("Usage: java Test <package>");
+        return;
+      }
+      String target = argv[0];
+      this.loader = new DelegatingLoader("ersatz/");
+      Class c = this.loader.loadClass(target, true);
+      Object [] arg = {};
+      Class [] argClass = {};
+      c.getMethod("main", argClass).invoke(null, arg);
+    } catch (Exception e) {
+    System.out.println("Error " + e.toString() + " in Test.doIt.");
+    }
+  }
+  public static void main(String argv[]) {
+    Test t = new Test();
+    t.doIt(argv);
+  }
+}
+</package></pre>
+
+<pre>// RT3
+public class RT3 {
+  public  static void main() {
+    try {
+      System.out.println("Hello...");
+      System.out.println("Going to attempt to read a field that exists in the ersatz class but not the real class...");
+      RR rr = new RR();
+      R r  = rr.getR();
+      System.out.println("  r.s is " + r.s + ".");
+      System.out.println("...bye.");
+    } catch (Exception e) { 
+      System.out.println("Exception " + e.toString() + " in RT3.main.");
+    }
+  }
+
+}
+</pre>
+
+<p></p>
+
+
+
+</body></html>
