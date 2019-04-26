@@ -7,12 +7,12 @@ import java.util.concurrent.CountDownLatch;
 
 public class Instrument2 {
   static CountDownLatch stop = new CountDownLatch(1);
-  
+
   public static class A {
     public static Runnable getRunnable() {
       return () -> {
         try { stop.await(); } catch (Exception e) {};
-      };      
+      };
     }
   }
   public static void main(String[] args) throws UnmodifiableClassException, InterruptedException, IOException, NoSuchFieldException, SecurityException {

@@ -33,7 +33,7 @@ public class Unload {
     o = null;
     cl = null;
     systemGC();
-    
+
     cl = new URLClassLoader(new URL[] { Unload.class.getResource("..") }, null);
     o = cl.loadClass("simonis.Unload$Y").newInstance();
     o = null;
@@ -41,7 +41,7 @@ public class Unload {
     systemGC();
     System.out.println(keepAlive);
     keepAlive = null;
-    systemGC();  
+    systemGC();
 
     cl = new URLClassLoader(new URL[] { Unload.class.getResource("..") }, null);
     Class<?> c = cl.loadClass("simonis.Unload$Z");
@@ -49,7 +49,7 @@ public class Unload {
     c = null;
     cl = null;
     systemGC();
-    systemGC();  
+    systemGC();
 
   }
   static void systemGC() throws IOException {
@@ -67,6 +67,6 @@ public class Unload {
       try {
         method.invoke(null);
       } catch (SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {}
-    }    
+    }
   }
 }
