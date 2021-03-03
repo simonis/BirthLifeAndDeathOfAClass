@@ -1,19 +1,41 @@
 ### Howto build:
 
-from examples:
+from `examples/`:
 ```
-/share/output-jdk9-dev-opt/images/jdk/bin/javac -cp lib/asm-6.0.jar -d bin/ src/simonis/InstAgent.java
-cd bin
-/share/output-jdk9-dev-opt/images/jdk/bin/jar cvfm InstAgent.jar ../src/manifest.mf simonis/InstAgent*
-```
-
-```
-/share/software/Java/corretto-11/bin/javac src/simonis/HotChocolate.java
-/priv/simonisv/output/jdk-opt/images/jdk/bin/javac --patch-module java.base=src src/jdk/internal/loader/ClassLoaders.java
+$ /share/output-jdk9-dev-opt/images/jdk/bin/javac -cp lib/asm-6.0.jar -d bin/ src/simonis/InstAgent.java
+$ cd bin
+$ /share/output-jdk9-dev-opt/images/jdk/bin/jar cvfm InstAgent.jar ../src/manifest.mf simonis/InstAgent*
 ```
 
 ```
-g++ -fPIC -shared -I /share/output-jdk9-hs-comp-dbg/images/jdk/include/ -I /share/output-jdk9-hs-comp-dbg/images/jdk/include/linux/ -o ../bin/traceMethodAgent.so jvmti/traceMethodAgent.cpp
+$ /share/software/Java/corretto-11/bin/javac src/simonis/HotChocolate.java
+$ /priv/simonisv/output/jdk-opt/images/jdk/bin/javac --patch-module java.base=src src/jdk/internal/loader/ClassLoaders.java
+```
+
+from `examples/src/`:
+```
+$ g++ -fPIC -shared -I /share/software/Java/corretto-11/include -I /share/software/Java/corretto-11/include/linux -o ../lib/traceClassAgent.so jvmti/traceClassAgent.cpp
+$ javac simonis/HelloWait.java 
+$ /priv/simonisv/output/jdk-opt/images/jdk/bin/java -agentpath:../lib/traceClassAgent.so=xxx simonis.HelloWait
+HelloWorld
+Exception in thread "main" java.lang.IllegalArgumentException: Volker is the best!            
+	at java.base/java.lang.Object.wait(Object.java:442)
+	at simonis.HelloWait.main(HelloWait.java:7)
+
+$ /priv/simonisv/output/jdk-opt/images/jdk/bin/java -agentpath:../lib/traceClassAgent.so=java simonis.HelloWait | grep Object
+FileLoad:     java/lang/Object ((nil))
+FileLoad:     java/lang/reflect/AccessibleObject ((nil))
+FileLoad:     java/io/ObjectStreamField ((nil))
+ClassLoad:    java/io/ObjectStreamField
+FileLoad:     java/util/Objects ((nil))
+ClassLoad:    java/util/Objects
+ClassPrepare: java/util/Objects
+ClassPrepare: java/lang/reflect/AccessibleObject
+ClassPrepare: java/io/ObjectStreamField
+ClassLoad:    java/lang/Object
+Exception in thread "main" java.lang.IllegalArgumentException: Volker is the best!            
+	at java.base/java.lang.Object.wait(Object.java:442)
+	at simonis.HelloWait.main(HelloWait.java:7)
 ```
 
 ### Howto run:

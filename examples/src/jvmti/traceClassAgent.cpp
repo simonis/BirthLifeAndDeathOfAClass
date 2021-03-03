@@ -45,13 +45,32 @@ void JNICALL classFileLoadCallback(jvmtiEnv* jvmti, JNIEnv* jni,
   if (strstr(name, pattern) == name) {
     fprintf(stdout, "FileLoad:     %s (%p)\n", name, loader);
   }
+  if (strcmp(name, "java/lang/Object") == 0) {
+    *new_class_data_len = class_data_len;
+    jvmti->Allocate(*new_class_data_len, new_class_data);
+    // Create a copy of the original java.lang.Object class
+    memcpy(*new_class_data, class_data, *new_class_data_len);
+    // Replace all '\0' by 'X' and terminate with '\0' such that we can search in the class file
+    for (int i = 0; i < class_data_len; i++) {
+      if ((*new_class_data)[i] == '\0') (*new_class_data)[i] = 'X';
+    }
+    (*new_class_data)[class_data_len - 1] == '\0';
+    // Now search for the exception message which is thrown when we call Object.wait(long, int) with a negative argument
+    char* dest = strstr((char*)*new_class_data, (char*)"timeoutMillis value is negative");
+    // Restore the origial java.lang.Object class data in 'new_class_data'
+    memcpy(*new_class_data, class_data, *new_class_data_len);
+    // If we found the execption message before, patch it in the new class data
+    if (dest != NULL) {
+      int index = dest - (char*)*new_class_data;
+      const char* volker = "Volker is the best!            ";
+      strncpy((char*)*new_class_data + index, volker, strlen(volker));
+    }
+  }
 }
 
 extern "C"
 JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM* jvm, char* options, void* reserved) {
   jvmtiEnv* jvmti = NULL;
-  jvmtiCapabilities capa;
-  jvmtiError error;
 
   if (options) pattern = strdup(options); // Options may contain the pattern
 
@@ -60,6 +79,14 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM* jvm, char* options, void* reserved) 
     fprintf(stderr, "Can't access JVMTI!\n");
     return JNI_ERR;
   }
+
+  jvmtiCapabilities caps;
+  memset(&caps, 0, sizeof(caps));
+  caps.can_redefine_classes = 1;
+  caps.can_generate_all_class_hook_events = 1;
+  caps.can_generate_early_vmstart = 1;
+  caps.can_generate_early_class_hook_events = 1;
+  jvmti->AddCapabilities(&caps);
 
   jvmtiEventCallbacks callbacks;
   memset(&callbacks, 0, sizeof(jvmtiEventCallbacks));
